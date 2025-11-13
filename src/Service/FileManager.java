@@ -26,16 +26,17 @@ public class FileManager {
                     continue; //만약, 빈줄이 있으면 넘김
                 }
 
-                String[] temp=str.split("\\t",2); //두조각만 생성(한번만 쪼갬)
-                if(temp.length<2){
+                String[] temp=str.split("\\t",3); //두조각만 생성(한번만 쪼갬) -> 세조각 생성(두번 쪼갬)
+                if(temp.length<3){
                     continue;  //형식이 깨졌으면 건너뛴다
                 }
 
                 String eng=temp[0].trim();
                 String korLine=temp[1].trim();
+                String wrong_number = temp[2].trim();
                 //한글 뜻 파싱
                 // 단어 추가: 한글 뜻 여러 개를 한 번에 처리 (korLine: "뜻1/ 뜻2/ 뜻3")
-                Word w=new Word(eng); //일단 eng 가지고 Word 객체 생성
+                Word w = new Word(eng); //일단 eng 가지고 Word 객체 생성
                 StringTokenizer st=new StringTokenizer(korLine,"/");
                 while (st.hasMoreTokens()){
                     String kor=st.nextToken().trim(); //토큰들로부터 한글 하나씩 읽고
@@ -44,6 +45,7 @@ public class FileManager {
                         w.getKors().add(kor);
                     }
                 }
+                w.setWrong_number(Integer.parseInt(wrong_number));  //틀린 횟수 넣기
                 list.add(w);  //한 줄에서 만든 단어 추가
             }
         } catch (FileNotFoundException e) {
@@ -68,6 +70,9 @@ public class FileManager {
                     }
                     output.print(w.getKors().get(i)); //한글 뜻은 리스트니까 차례대로 출력
                 }
+                output.print("\t"); //탭으로 하나 띄고
+                output.println(w.getWrong_number()); //틀린 횟수 가져오기
+
                 output.println(); //줄바꿈
             }
         } catch (FileNotFoundException e) {

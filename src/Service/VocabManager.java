@@ -46,10 +46,19 @@ public class VocabManager {
                 case 2 -> editVocab();
                 case 3 -> deleteVocab();
                 case 4 -> searchVocab();
+                case 5 -> quiz_essay();
+                case 6 -> quiz_multiChoice();
                 case 9 -> System.out.println("종료합니다");
                 default -> System.out.println("메뉴를 다시 선택하세요");
             }
         }
+    }
+
+    private void quiz_multiChoice() {
+    }
+
+    private void quiz_essay() {
+
     }
 
     private void searchVocab() {
