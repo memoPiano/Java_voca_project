@@ -10,6 +10,9 @@ import java.util.*;
 public class FileManager {
     private String filePath;
 
+    public FileManager() {
+    }
+
     //파일 이름으로 객체 생성자
     public FileManager(String filePath) {
         this.filePath = filePath;
