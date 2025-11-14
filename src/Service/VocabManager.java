@@ -118,15 +118,167 @@ public class VocabManager {
         return res;
     }
 
+    //삭제 기능
     private void deleteVocab() {
-        System.out.println("삭제 기능");
-    }
+            System.out.print("[삭제] 영어 단어 입력: ");
+            String eng = scan.nextLine().trim().toLowerCase();
 
+            Word w = vocabMap.get(eng);
+            if(w == null) {
+                System.out.println("해당 단어가 존재하지 않습니다.");
+                return;
+            }
+
+            System.out.print("정말 삭제하시겠습니까? (Y/N) : ");
+            String confirm = scan.nextLine().trim().toUpperCase();
+            while(!confirm.equals("Y") && !confirm.equals("N")) {
+                System.out.print("Y/N 중에서 입력해주세요: ");
+                confirm = scan.nextLine().trim().toUpperCase();
+            }
+
+            if(confirm.equals("Y")) {
+                voc.remove(w);
+                vocabMap.remove(eng);
+                System.out.println(eng + "단어 삭제 완료!");
+            } else {
+                System.out.println("삭제 취소");
+            }
+        }
+
+    //수정 기능
     private void editVocab() {
-        System.out.println("수정 기능");
+        System.out.print("[수정] 영어 단어 입력: ");
+        String eng = scan.nextLine().trim().toLowerCase();
+
+        Word w = vocabMap.get(eng);
+        if (w == null) {
+            System.out.println("해당 단어가 존재하지 않습니다.");
+            return;
+        }
+
+        System.out.println("현재 단어: " + w.getEng());
+        System.out.println("현재 뜻: " + w.getKors());
+
+        System.out.println("\n[수정 메뉴]");
+        System.out.println("1) 영어 단어 수정");
+        System.out.println("2) 한글 뜻 추가");
+        System.out.println("3) 한글 뜻 삭제");
+        System.out.println("4) 한글 뜻 전체 수정");
+        System.out.print("선택: ");
+
+        int choice = scan.nextInt();
+        scan.nextLine(); // 개행 제거
+
+        switch (choice) {
+
+            //영어 단어 자체를 수정
+            case 1 -> {
+                System.out.print("새 영어 단어 입력: ");
+                String newEng = scan.nextLine().trim().toLowerCase();
+                if (newEng.isEmpty()) {
+                    System.out.println("입력이 비어 있습니다.");
+                    return;
+                }
+
+                // map 업데이트
+                vocabMap.remove(eng);
+                w.setEng(newEng);
+                vocabMap.put(newEng, w);
+                System.out.println("영어 단어 수정 완료!");
+            }
+
+            //한글 뜻 추가
+            case 2 -> {
+                System.out.print("추가할 뜻 입력 (/로 여러 개 가능): ");
+                String line = scan.nextLine().trim();
+                String[] addList = line.split("/");
+
+                for (String k : addList) {
+                    k = k.trim();
+                    if (!w.getKors().contains(k))
+                        w.getKors().add(k);
+                }
+                System.out.println("뜻 추가 완료!");
+            }
+
+            //한글 뜻 삭제
+            case 3 -> {
+                System.out.print("삭제할 뜻 입력: ");
+                String delKor = scan.nextLine().trim();
+
+                if (w.getKors().remove(delKor)) {
+                    System.out.println("뜻 삭제 완료!");
+                } else {
+                    System.out.println("해당 뜻이 없습니다.");
+                }
+            }
+
+            //뜻 전체 새로 작성
+            case 4 -> {
+                System.out.print("새로운 뜻 입력 (/로 여러 개 가능): ");
+                String line = scan.nextLine().trim();
+                String[] newList = line.split("/");
+
+                ArrayList<String> newKors = new ArrayList<>();
+                for (String k : newList) {
+                    k = k.trim();
+                    if (!k.isEmpty())
+                        newKors.add(k);
+                }
+                w.setKors(newKors);
+                System.out.println("뜻 전체 수정 완료!");
+            }
+
+            default -> System.out.println("잘못된 선택입니다.");
+        }
     }
 
+
+
+
+
+
+    //추가 기능
     private void addVocab() {
-        System.out.println("추가 기능");
-    }
+            System.out.print("[추가] 추가할 영단어를 입력하세요: ");
+            String eng = scan.nextLine().trim().toLowerCase();
+
+        // 영어 단어 유효성 검사
+            if (eng.isEmpty() || !eng.matches("[a-zA-Z]+")) {
+                System.out.println("유효하지 않은 영어 단어입니다.");
+                return;
+            }
+
+            System.out.print("한글 뜻을 입력하세요:  ");
+            String korLine = scan.nextLine().trim();
+            if (korLine.isEmpty()) {
+                System.out.println("뜻이 비어있습니다.");
+                return;
+            }
+
+            String[] kors = korLine.split("/");
+
+            // 이미 존재하는 영단어인지 검사
+            Word existing = vocabMap.get(eng);
+
+            if (existing != null) {
+                // 기존 단어에 뜻 추가 (중복 제외)
+                for (String k : kors) {
+                    if (!existing.getKors().contains(k))
+                        existing.getKors().add(k);
+                }
+
+
+                System.out.println("기존 단어 '" + eng + "' 에 뜻이 추가되었습니다.");
+            } else {
+                Word newWord = new Word(eng);
+                for (String k : kors) {
+                    if (!newWord.getKors().contains(k))
+                        newWord.getKors().add(k);
+                }
+                voc.add(newWord);
+                vocabMap.put(eng, newWord);
+                System.out.println(eng + "추가 완료!");
+            }
+        }
 }
