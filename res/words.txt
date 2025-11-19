@@ -1,8 +1,8 @@
-at first	처음에는	1
+at first	처음에는	0
 castle	성	0
 consider	고려하다/ 간주하다	0
 considerable	상당한	0
-enlighten	계몽시키다 개화시키다	0
+enlighten	계몽시키다/ 개화시키다	1
 explain	설명하다	0
 explanation	설명	0
 female	여성의	0
@@ -15,3 +15,4 @@ invent	발명하다/ 만들다	0
 invention	발명	0
 play	역할/ 놀이	0
 ugly	못생긴	0
+apple	사과 사과사과	0

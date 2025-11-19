@@ -1,13 +1,13 @@
 package Service;
 
 import Vocab.Word;
-
+import Exception.MenuRangeCheckException;
 import java.util.*;
 
 public class VocabManager extends FileManager{
     String userName;
     ArrayList<Word> voc = new ArrayList<>();  //여기다 주로 저장
-    HashMap<String, Word> vocabMap = new HashMap<>();
+    HashMap<String, Word> vocabMap = new HashMap<>();  //이건 검색용이라 저장에는 포함되지 않을 예정.
 
     private static final Scanner scan = new Scanner(System.in); //사용자로부터 입력받을 스캐너
 
@@ -17,8 +17,15 @@ public class VocabManager extends FileManager{
 
     public void setAll(Collection<Word> list) {
         voc.clear(); //깔끔하게 비움
-        if (list != null)
+        vocabMap.clear();
+        if (list != null) {
             voc.addAll(list); //전부 넣기
+
+            //초기 로딩시 HashMap도 자동 초기화
+            for (Word w : list) {
+                vocabMap.put(w.getEng(),w);
+            }
+        }
     }
 
     public ArrayList<Word> getVoc() {
@@ -36,28 +43,82 @@ public class VocabManager extends FileManager{
             System.out.println("4) 단어 검색 (영→한 / 한→영)");
             System.out.println("5) 퀴즈");
             System.out.println("6) 오답노트");
+            System.out.println("7) 시험보기");
             System.out.println("9) 종료");
             System.out.print("메뉴 선택: ");
 
-            choice = scan.nextInt();
-            scan.nextLine();
-            System.out.println();
+            try {
+                choice = scan.nextInt();
+                scan.nextLine();
+                System.out.println();
 
-            switch (choice) {
-                case 1 -> addVocab();
-                case 2 -> editVocab();
-                case 3 -> deleteVocab();
-                case 4 -> searchVocab();
-                case 5 -> quiz();
-                case 6 -> show_wrongWord();
-                case 9 -> System.out.println("종료합니다");
-                default -> System.out.println("메뉴를 다시 선택하세요");
+                // 1~9만 허용함
+                if (!( (choice >= 1 && choice <= 9))) {
+                    throw new MenuRangeCheckException("메뉴는 1~9만 입력 가능합니다.");
+                }
+
+                switch (choice) {
+                    case 1 -> addVocab();
+                    case 2 -> editVocab();
+                    case 3 -> deleteVocab();
+                    case 4 -> searchVocab();
+                    case 5 -> quiz();
+                    case 6 -> show_wrongWord();
+                    case 7 -> voc_test();
+                    case 9 -> System.out.println("종료합니다");
+                    default -> System.out.println("메뉴를 다시 선택하세요");
+                }
+            }catch (MenuRangeCheckException e){
+                System.out.println(e.getMessage());
+            } catch (InputMismatchException e){
+                System.out.println("정수로 입력해주세요.");
+                scan.nextLine(); // 버퍼 비우기
+            }
+        }
+    }
+
+    private void voc_test() {
+        ArrayList<Word> test_array = new ArrayList<>();
+        ArrayList<Word> exam_pass_array = new ArrayList<>();
+
+        for (Word word : voc) {
+            if (word.getWrong_number() != 0) {
+                test_array.add(word);
+            }
+        }
+        if(test_array.isEmpty())
+        {
+            System.out.println("틀린 단어가 없습니다!");
+            return;
+        }
+
+        System.out.println("한글 뜻을 보고 영어를 입력하세요");
+        Collections.shuffle(test_array);
+        for(int i = 0;i<test_array.size();i++)
+        {
+            System.out.print(test_array.get(i).getKors() + ": ");
+            Scanner scan = new Scanner(System.in);
+            String test_eng = scan.nextLine();
+            if(test_eng.equals(test_array.get(i).getEng()))
+            {
+                test_array.get(i).setWrong_number(test_array.get(i).getWrong_number()-1);
+                exam_pass_array.add(test_array.get(i));
+            }
+        }
+        System.out.println("시험이 종료되었습니다 수고하셨습니다");
+        if(exam_pass_array.isEmpty())
+            System.out.println("맞춘 단어가 없습니다");
+        else {
+            System.out.println("---맞춘 단어---");
+            for (Word word : exam_pass_array) {
+                System.out.println(word);
             }
         }
     }
 
     private void show_wrongWord() {
         ArrayList<Word> wrongWordList = voc;
+
         System.out.println("\n------ " + userName + "의 오답노트 -------");
         for(int i = 0;i<voc.size();i++)
         {
@@ -68,6 +129,8 @@ public class VocabManager extends FileManager{
         }
     }
 
+
+    //객관식 문제 (영어 주고 한글뜻 4개)
     private void quiz_multiChoice() {
         ArrayList<Word> quiz_array = voc;
         if(quiz_array.size()<4)
@@ -109,18 +172,17 @@ public class VocabManager extends FileManager{
             choice3_eng = choice3.getEng();
         }
 
-        int[] order = {0,1,2,3};
-        Random rand = new Random();
-        for(int i =0;i<4;i++)
-        {
-            int r = rand.nextInt(4);
-            int temp = order[i];
-            order[i] = order[r];
-            order[r] = temp;
-        }
         String[] arr = {quiz_word_eng, choice1_eng, choice2_eng, choice3_eng};
+        Random rand = new Random();
+        for(int i = arr.length-1;i>0;i--)
+        {
+            int j = rand.nextInt(i+1);
+            String temp = arr[i];
+            arr[i] = arr[j];
+            arr[j] = temp;
+        }
         for(int i = 0;i<4;i++)
-            System.out.println("("+i+") " + arr[order[i]]);
+            System.out.println("("+(i+1)+") " + arr[i]);
 
         while(wrong_time!=3)
         {
@@ -128,7 +190,7 @@ public class VocabManager extends FileManager{
             int user_input = scan.nextInt();
             scan.nextLine();
 
-            if(arr[user_input-1].equals(quiz_word_eng))
+            if(arr[user_input].equals(quiz_word_eng))
             {
                 System.out.println("정답입니다!");
                 break;
@@ -152,6 +214,7 @@ public class VocabManager extends FileManager{
         }
     }
 
+    //한글 뜻 보여주고 영어 맞추기
     private void quiz_essay() {
         ArrayList<Word> quiz_array = voc;
         System.out.println("----------------------------");
@@ -202,6 +265,7 @@ public class VocabManager extends FileManager{
 
     }
 
+    //퀴즈 메서드
     private void quiz() {
         System.out.println("---------------------------");
         System.out.println("1) 객관식 퀴즈");
@@ -400,51 +464,72 @@ public class VocabManager extends FileManager{
     }
 
 
-
-
-
-
     //추가 기능
+    //voc 와 vocabMap 업데이트로 수정 -- 강동훈
     private void addVocab() {
-            System.out.print("[추가] 추가할 영단어를 입력하세요: ");
-            String eng = scan.nextLine().trim().toLowerCase();
+        System.out.print("[추가] 추가할 영단어를 입력하세요: ");
+        String eng = scan.nextLine().trim();
 
         // 영어 단어 유효성 검사
-            if (eng.isEmpty() || !eng.matches("[a-zA-Z]+")) {
-                System.out.println("유효하지 않은 영어 단어입니다.");
-                return;
-            }
+        if (eng.isEmpty() || !eng.matches("[a-zA-Z]+")) {
+            System.out.println("유효하지 않은 영어 단어입니다. (영문자만 입력)");
+            return;
+        }
 
-            System.out.print("한글 뜻을 입력하세요:  ");
-            String korLine = scan.nextLine().trim();
-            if (korLine.isEmpty()) {
-                System.out.println("뜻이 비어있습니다.");
-                return;
-            }
+        System.out.print("한글 뜻을 입력하세요 (여러 개면 '/' 로 구분): ");
+        String korLine = scan.nextLine().trim();
+        if (korLine.isEmpty()) {
+            System.out.println("뜻이 비어있습니다.");
+            return;
+        }
 
-            String[] kors = korLine.split("/");
-
-            // 이미 존재하는 영단어인지 검사
-            Word existing = vocabMap.get(eng);
-
-            if (existing != null) {
-                // 기존 단어에 뜻 추가 (중복 제외)
-                for (String k : kors) {
-                    if (!existing.getKors().contains(k))
-                        existing.getKors().add(k);
-                }
-
-
-                System.out.println("기존 단어 '" + eng + "' 에 뜻이 추가되었습니다.");
-            } else {
-                Word newWord = new Word(eng);
-                for (String k : kors) {
-                    if (!newWord.getKors().contains(k))
-                        newWord.getKors().add(k);
-                }
-                voc.add(newWord);
-                vocabMap.put(eng, newWord);
-                System.out.println(eng + "추가 완료!");
+        // 한글 뜻 파싱
+        String[] parts = korLine.split("/");
+        ArrayList<String> newKors = new ArrayList<>();
+        for (String p : parts) {
+            String k = p.trim();
+            if (!k.isEmpty() && !newKors.contains(k)) { // 같은 줄 안에서 중복 제거
+                newKors.add(k);
             }
         }
+        if (newKors.isEmpty()) {
+            System.out.println("유효한 뜻이 없습니다.");
+            return;
+        }
+
+        // 이미 존재하는 영단어인지 검사
+        Word existing = vocabMap.get(eng);
+
+        if (existing != null) {
+            // 1, 2번 케이스: 기존 단어에 대해 중복 여부 확인
+            int addedCount = 0;
+            for (String k : newKors) {
+                if (!existing.getKors().contains(k)) {
+                    existing.getKors().add(k);  // 새 뜻만 뒤에 추가
+                    addedCount++;
+                }
+            }
+
+            if (addedCount == 0) {
+                // 1. 입력한 모든 뜻이 이미 존재
+                System.out.println("모든 뜻이 이미 존재합니다. 추가된 뜻이 없습니다.");
+            } else {
+                // 2. 일부 또는 전부 새 뜻이라서 추가됨
+                System.out.println("'" + eng + "' 에 새 뜻 " + addedCount + "개가 추가되었습니다.");
+                System.out.println("현재 뜻: " + existing.getKors());
+            }
+
+        } else {
+            // 3. 새로운 영단어
+            Word newWord = new Word(eng);
+            newWord.getKors().addAll(newKors);
+
+            voc.add(newWord);            // 리스트에 추가
+            vocabMap.put(eng, newWord);  // 맵에도 추가
+
+            System.out.println("'" + eng + "' 단어가 새로 추가되었습니다.");
+            System.out.println("뜻: " + newWord.getKors());
+        }
+    }
+
 }
