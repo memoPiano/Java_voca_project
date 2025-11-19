@@ -1,7 +1,7 @@
-at first	처음에는	0
+at first	처음에는	1
 castle	성	0
 consider	고려하다/ 간주하다	0
-considerable	상당한	0
+considerable	상당한	1
 enlighten	계몽시키다/ 개화시키다	1
 explain	설명하다	0
 explanation	설명	0
