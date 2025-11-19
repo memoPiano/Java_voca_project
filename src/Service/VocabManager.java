@@ -45,6 +45,7 @@ public class VocabManager extends FileManager {
             System.out.println("5) 퀴즈");
             System.out.println("6) 오답노트 보기");
             System.out.println("7) 오답노트 재시험");
+            System.out.println("8) 오늘의 추천 10개 단어");
             System.out.println("9) 종료");
             System.out.print("메뉴 선택: ");
 
@@ -66,6 +67,7 @@ public class VocabManager extends FileManager {
                     case 5 -> quiz();
                     case 6 -> show_wrongWord();
                     case 7 -> voc_test();
+                    case 8 -> todayWord();
                     case 9 -> System.out.println("종료합니다");
                     default -> System.out.println("메뉴를 다시 선택하세요");
                 }
@@ -76,6 +78,10 @@ public class VocabManager extends FileManager {
                 scan.nextLine(); // 버퍼 비우기
             }
         }
+    }
+
+    private void todayWord() {
+        System.out.println("아직 미구현. 메뉴 8번에 해당");
     }
 
     //오답 단어만 재시험
@@ -119,6 +125,7 @@ public class VocabManager extends FileManager {
     private int totalQuizCount = 0;   // 총 문제 수
     private int correctCount = 0;     // 맞춘 문제 수
     private int wrongCount = 0;       // 틀린 문제 수
+
     //오답노트 정보 보기
     private void show_wrongWord() {
         System.out.println("\n====== 학습 통계 ======");
@@ -135,7 +142,7 @@ public class VocabManager extends FileManager {
             System.out.println("총 퀴즈 문제 수 : " + totalQuizCount);
             System.out.println("맞은 문제 수   : " + correctCount);
             System.out.println("틀린 문제 수   : " + wrongCount);
-            System.out.printf ("정답률         : %.2f%%\n", correctRate);
+            System.out.printf("정답률         : %.2f%%\n", correctRate);
         }
 
         // 퀴즈를 안 봤어도 오답 목록/통계는 항상 보여주기
@@ -163,7 +170,7 @@ public class VocabManager extends FileManager {
     }
 
     //상위 5개 오답 보기
-    private void showTop5(){
+    private void showTop5() {
         //원본 손상 방지용
         ArrayList<Word> sorted = new ArrayList<>(voc);
         selectionSort(sorted);
@@ -204,9 +211,6 @@ public class VocabManager extends FileManager {
             System.out.println("오답 단어가 없습니다!");
         }
     }
-
-
-
 
 
     //객관식 쉬움모드
@@ -280,7 +284,7 @@ public class VocabManager extends FileManager {
                     wrong_time++;
                     //continue;
                 }
-            }catch (NumberFormatException e) {
+            } catch (NumberFormatException e) {
                 System.out.println("숫자만 입력해주세요");
             }
         }
@@ -367,9 +371,9 @@ public class VocabManager extends FileManager {
                 case 2 -> quiz_essay();
                 default -> System.out.println("메뉴를 다시 선택하세요");
             }
-        }catch (MenuRangeCheckException e){
+        } catch (MenuRangeCheckException e) {
             System.out.println(e.getMessage());
-        } catch (InputMismatchException e){
+        } catch (InputMismatchException e) {
             System.out.println("정수만 입력해주세요");
             scan.nextLine(); // 버퍼 비우기
         }
@@ -396,24 +400,124 @@ public class VocabManager extends FileManager {
                 case 2 -> quiz_multiChoiceHard();    // 하드모드
                 default -> System.out.println("메뉴를 다시 선택하세요");
             }
-        }catch (MenuRangeCheckException e){
+        } catch (MenuRangeCheckException e) {
             System.out.println(e.getMessage());
-        }catch (InputMismatchException e){
+        } catch (InputMismatchException e) {
             System.out.println("정수만 입력해주세요");
             scan.nextLine(); // 버퍼 비우기
         }
     }
 
     private void quiz_multiChoiceHard() {
-        System.out.println("퀴즈 하드모드 구현 필요");
+        //System.out.println("퀴즈 하드모드 구현 필요");
+        // 1) 단어 수 체크
+        if (voc.size() < 4) {
+            System.out.println("단어가 4개 이상 있어야 하드 모드를 진행할 수 있습니다.");
+            return;
+        }
+
+        // 2) 문제에 사용할 단어 풀 만들기
+        ArrayList<Word> pool = new ArrayList<>(voc);
+        Random rand = new Random();
+
+        // 최대 5문제까지 출제, 만약 5개 보다 적으면 일찍 끝냄
+        int numQuestions = Math.min(5, pool.size());
+
+        int localCorrect = 0; // 이번 하드 모드에서 맞힌 개수
+        int localWrong = 0;   // 이번 하드 모드에서 틀린 개수
+
+        for (int q = 0; q < numQuestions; q++) {
+            Word answer = pool.get(q); // 이번 문제의 정답 단어
+
+            // 2-1) 한글 뜻 문자열로 만들기 ("뜻1 / 뜻2 / 뜻3")
+            StringBuilder korSb = new StringBuilder();
+            for (int i = 0; i < answer.getKors().size(); i++) {
+                if (i > 0) korSb.append(" / ");
+                korSb.append(answer.getKors().get(i));
+            }
+
+            // 2-2) 보기 목록 만들기: 정답 1개 + 오답 3개
+            ArrayList<Word> options = new ArrayList<>();
+            options.add(answer); // 정답 먼저 넣기
+
+            // 오답 3개 뽑기 (voc 전체에서 랜덤)
+            while (options.size() < 4) {
+                Word candidate = voc.get(rand.nextInt(voc.size()));
+                if (!options.contains(candidate)) { // 이미 들어간 단어는 제외
+                    options.add(candidate);
+                }
+            }
+
+            // 2-3)
+            // 보기 순서를 랜덤하게 출력(직접 섞기) ---------
+            ArrayList<Word> temp = new ArrayList<>(options);
+            ArrayList<Word> displayed = new ArrayList<>();
+
+            System.out.println("\n[" + (q + 1) + "번 문제]");
+            System.out.println("뜻: " + korSb);
+
+            for (int i = 0; i < 4; i++) {
+                int idx = rand.nextInt(temp.size());
+                Word w = temp.get(idx);
+                displayed.add(w);
+                temp.remove(idx);
+
+                System.out.println((i + 1) + ") " + w.getEng());
+            }
+
+            // 2-4) 정답 위치 찾기
+            int correctIndex = -1;
+            for (int i = 0; i < displayed.size(); i++) {
+                if (displayed.get(i) == answer) {
+                    correctIndex = i;
+                    break;
+                }
+            }
+
+            //사용자 입력 처리
+            System.out.print("정답 번호를 입력하세요 (1~4): ");
+            String input = scan.nextLine().trim();
+
+            // 전체 퀴즈 통계: 문제 하나 풀 때마다 +1
+            totalQuizCount++;
+
+            boolean isCorrect = false;
+
+            // 4) 정답 판정: 1~4 중에서 정답 번호면 true, 그 외는 전부 오답
+            if (input.matches("[1-4]")) {
+                int choice = Integer.parseInt(input);
+                if (choice - 1 == correctIndex) {
+                    isCorrect = true;
+                }
+            }
+            // matches 안 맞거나 번호가 달라도 isCorrect는 false → 전부 오답
+
+            // 5) 결과 처리 및 통계 업데이트
+            if (isCorrect) {
+                System.out.println("정답입니다! ");
+                correctCount++;
+                localCorrect++;
+            } else {
+                System.out.println("오답입니다. ");
+                System.out.println("정답: " + (correctIndex + 1) + ") " + answer.getEng());
+                wrongCount++;
+                localWrong++;
+                // 이 단어의 오답 횟수도 1 증가
+                answer.setWrong_number(answer.getWrong_number() + 1);
+            }
+        }
+        System.out.println();
+        System.out.println("====== 하드 모드 결과 ======");
+        System.out.println("총 " + numQuestions + "문제 중 " + localCorrect + "개 정답, " + localWrong + "개 오답.");
     }
 
 
     private void searchVocab() {
         if (voc.isEmpty()) {
-            System.out.println("단어장이 비어있습니다."); return;
+            System.out.println("단어장이 비어있습니다.");
+            return;
         }
-        int dir=-1;
+        int dir = -1;
         while (true) {
             System.out.println("\n[검색] 방향을 선택하세요: 1) 영->한 2) 한->영");
             System.out.print(">> ");
@@ -492,7 +596,10 @@ public class VocabManager extends FileManager {
 
     //삭제 기능
     private void deleteVocab() {
-        if (voc.isEmpty()) { System.out.println("단어장이 비어있습니다."); return; }
+        if (voc.isEmpty()) {
+            System.out.println("단어장이 비어있습니다.");
+            return;
+        }
         System.out.print("[삭제] 영어 단어 입력: ");
         String eng = scan.nextLine().trim();
 
@@ -512,14 +619,17 @@ public class VocabManager extends FileManager {
             vocabMap.remove(eng);
 
             System.out.println("'" + eng + "' 단어 삭제 완료!");
-        }else{
+        } else {
             System.out.println("삭제 취소!");
         }
     }
 
     //수정 기능
     private void editVocab() {
-        if (voc.isEmpty()) { System.out.println("단어장이 비어있습니다."); return; }
+        if (voc.isEmpty()) {
+            System.out.println("단어장이 비어있습니다.");
+            return;
+        }
         System.out.print("[수정] 영어 단어 입력: ");
         String eng = scan.nextLine().trim().toLowerCase();
 
@@ -539,7 +649,7 @@ public class VocabManager extends FileManager {
         System.out.println("4) 한글 뜻 전체 수정");
         System.out.print("선택: ");
 
-        int choice =-1;
+        int choice = -1;
 
         while (true) {
             System.out.print("선택: ");
