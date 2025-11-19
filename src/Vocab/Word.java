@@ -27,6 +27,9 @@ public class Word {
     }
     public int getWrong_number() {return wrong_number;}
     public void setWrong_number(int wrong_number) {this.wrong_number = wrong_number;}
+    public void increaseWrong() {
+        wrong_number++;
+    }
 
     @Override
     public String toString() {

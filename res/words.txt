@@ -13,7 +13,7 @@ in the place of	～대신에	0
 intelligent	지적인	0
 invent	발명하다/ 만들다	0
 invention	발명	0
-last	마지막/ 지난 계속하다	0
+last	마지막/ 지난 계속하다	2
 lately	최근에	0
 law	법	0
 oppression	억압	0
@@ -21,10 +21,10 @@ press	누르다/ 언론/ 출판	0
 recently	최근에	0
 region	지역	0
 regional	지역적인	0
-reinforce	강화시키다	0
+reinforce	강화시키다	5
 statement	진술	0
 suppress	저하시키다	0
-suppression	저하/ 의기소침	0
+suppression	저하/ 의기소침	3
 symbol	상징/ 징표	0
 training	훈련	0
 universally	보편적으로/ 일반적으로	0
@@ -42,7 +42,7 @@ lawful	법적인	0
 legal	합법적인	0
 male	남성의	0
 nowadays	최근에	0
-of late	최근에	0
+of late	최근에	1
 oppress	억압하다	0
 religion	종교	0
 religious	종교적인	0

@@ -43,8 +43,8 @@ public class VocabManager extends FileManager {
             System.out.println("3) 단어 삭제");
             System.out.println("4) 단어 검색 (영→한 / 한→영)");
             System.out.println("5) 퀴즈");
-            System.out.println("6) 오답노트");
-            System.out.println("7) 시험보기");
+            System.out.println("6) 오답노트 보기");
+            System.out.println("7) 오답노트 재시험");
             System.out.println("9) 종료");
             System.out.print("메뉴 선택: ");
 
@@ -78,6 +78,7 @@ public class VocabManager extends FileManager {
         }
     }
 
+    //오답 단어만 재시험
     private void voc_test() {
         ArrayList<Word> test_array = new ArrayList<>();
         ArrayList<Word> exam_pass_array = new ArrayList<>();
@@ -114,21 +115,104 @@ public class VocabManager extends FileManager {
         }
     }
 
-    private void show_wrongWord() {
-        ArrayList<Word> wrongWordList = voc;
 
-        System.out.println("\n------ " + userName + "의 오답노트 -------");
-        for (int i = 0; i < voc.size(); i++) {
-            if (wrongWordList.get(i).getWrong_number() != 0) {
-                System.out.println(wrongWordList.get(i) + "/ 틀린횟수: " + wrongWordList.get(i).getWrong_number());
+    private int totalQuizCount = 0;   // 총 문제 수
+    private int correctCount = 0;     // 맞춘 문제 수
+    private int wrongCount = 0;       // 틀린 문제 수
+    //오답노트 정보 보기
+    private void show_wrongWord() {
+        System.out.println("\n====== 학습 통계 ======");
+
+        if (totalQuizCount == 0) {
+            System.out.println("아직 퀴즈 기록이 없습니다.");
+            System.out.println("총 퀴즈 문제 수 : 0");
+            System.out.println("맞은 문제 수   : 0");
+            System.out.println("틀린 문제 수   : 0");
+            System.out.println("정답률         : 0.00%\n");
+        } else {
+            double correctRate = (correctCount * 100.0) / totalQuizCount; // 정답률
+
+            System.out.println("총 퀴즈 문제 수 : " + totalQuizCount);
+            System.out.println("맞은 문제 수   : " + correctCount);
+            System.out.println("틀린 문제 수   : " + wrongCount);
+            System.out.printf ("정답률         : %.2f%%\n", correctRate);
+        }
+
+        // 퀴즈를 안 봤어도 오답 목록/통계는 항상 보여주기
+        showTop5();
+        showAllWrongWords();
+    }
+
+
+    //선택정렬로 내림차순하는 코드
+    private void selectionSort(ArrayList<Word> list) {
+        for (int i = 0; i < list.size() - 1; i++) {
+            int maxIndex = i;
+            for (int j = i + 1; j < list.size(); j++) {
+                if (list.get(j).getWrong_number() > list.get(maxIndex).getWrong_number()) {
+                    maxIndex = j;
+                }
+            }
+            // swap 하기
+            if (maxIndex != i) {
+                Word temp = list.get(i);
+                list.set(i, list.get(maxIndex));
+                list.set(maxIndex, temp);
             }
         }
     }
+
+    //상위 5개 오답 보기
+    private void showTop5(){
+        //원본 손상 방지용
+        ArrayList<Word> sorted = new ArrayList<>(voc);
+        selectionSort(sorted);
+
+        System.out.println("\n--- 오답 상위 TOP 5 ---");
+        int count = 0;
+        for (Word w : sorted) {
+            if (w.getWrong_number() == 0)
+                break;  // 오답 없는 단어 이후는 필요 없음
+            System.out.println(w.getEng() + " : " + w.getWrong_number() + "회");
+            count++;
+            if (count == 5)
+                break;
+        }
+
+        if (count == 0) {
+            System.out.println("오답이 없습니다!");
+        }
+    }
+
+    //전체 오답리스트 보기
+    private void showAllWrongWords() {
+
+        ArrayList<Word> sorted = new ArrayList<>(voc);
+        selectionSort(sorted);
+
+        System.out.println("\n------ 전체 오답 단어 목록 (내림차순) -------");
+
+        boolean any = false;
+        for (Word w : sorted) {
+            if (w.getWrong_number() == 0)
+                continue;
+            any = true;
+            System.out.println(w.getEng() + " : " + w.getWrong_number() + "회");
+        }
+
+        if (!any) {
+            System.out.println("오답 단어가 없습니다!");
+        }
+    }
+
+
+
 
 
     //객관식 문제 (영어 주고 한글뜻 4개)
     private void quiz_multiChoice() {
         ArrayList<Word> quiz_array = voc;
+        totalQuizCount++;
         if (quiz_array.size() < 4) {
             System.out.println("단어장에 최소 4개 이상의 단어가 들어가있어야 합니다.");
             return;
@@ -182,6 +266,7 @@ public class VocabManager extends FileManager {
 
             if (arr[user_input].equals(quiz_word_eng)) {
                 System.out.println("정답입니다!");
+                correctCount++;
                 break;
             } else {
                 System.out.println("틀렸습니다");
@@ -192,15 +277,18 @@ public class VocabManager extends FileManager {
 
         if (wrong_time != 0 && wrong_time != 3) {
             quiz_word.setWrong_number(quiz_word.getWrong_number() + 1);
+            wrongCount++;
         } else if (wrong_time == 3) {
             System.out.println("정답을 맞추지 못하였습니다");
             quiz_word.setWrong_number(quiz_word.getWrong_number() + 1);
+            wrongCount++;
         }
     }
 
     //한글 뜻 보여주고 영어 맞추기
     private void quiz_essay() {
         ArrayList<Word> quiz_array = voc;
+        totalQuizCount++;
         System.out.println("----------------------------");
         System.out.println("다음으로 보여지는 한글 뜻을 가지고 영어를 입력하시면 됩니다. 기회는 총 3번입니다");
         System.out.println("3초 뒤 퀴즈가 시작됩니다");
@@ -223,6 +311,7 @@ public class VocabManager extends FileManager {
             String user_input_trim_ver = user_input.trim();
             if (user_input_trim_ver.equals(quiz_word.getEng())) {
                 System.out.println("정답입니다!");
+                correctCount++;
                 break;
             } else {
                 System.out.println("정답이 아닙니다! 다른 답을 입력해주세요");
@@ -233,9 +322,11 @@ public class VocabManager extends FileManager {
 
         if (wrong_time != 0 && wrong_time != 3) {
             quiz_word.setWrong_number(quiz_word.getWrong_number() + 1);
+            wrongCount++;
         } else if (wrong_time == 3) {
             System.out.println("정답을 맞추지 못하였습니다");
             quiz_word.setWrong_number(quiz_word.getWrong_number() + 1);
+            wrongCount++;
         }
 
     }
@@ -251,11 +342,36 @@ public class VocabManager extends FileManager {
         System.out.println();
 
         switch (user_choice) {
-            case 1 -> quiz_multiChoice();
+            case 1 -> quiz_multiMenu();   // 객관식 메뉴로 분리
             case 2 -> quiz_essay();
             default -> System.out.println("메뉴를 다시 선택하세요");
         }
     }
+
+    // 객관식 메뉴 (easy / hard)
+    private void quiz_multiMenu() {
+        System.out.println("------ 객관식 모드 선택 ------");
+        System.out.println("1) Easy 모드 ");
+        System.out.println("2) Hard 모드 ");
+        System.out.print("선택: ");
+
+        int mode = scan.nextInt();
+        scan.nextLine();
+        System.out.println();
+
+        switch (mode) {
+            case 1 -> quiz_multiChoice();        // 친구가 만든 기존 메서드
+            case 2 -> quiz_multiChoiceHard();    // 우리가 새로 만드는 하드 모드
+            default -> System.out.println("메뉴를 다시 선택하세요");
+        }
+    }
+
+    private void quiz_multiChoiceHard() {
+        System.out.println("퀴즈 하드모드 구현 필요");
+    }
+
+
+
 
     private void searchVocab() {
         System.out.println("\n[검색] 방향을 선택하세요: 1) 영->한 2) 한->영");
