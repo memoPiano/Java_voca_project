@@ -2,9 +2,10 @@ package Service;
 
 import Vocab.Word;
 import Exception.MenuRangeCheckException;
+
 import java.util.*;
 
-public class VocabManager extends FileManager{
+public class VocabManager extends FileManager {
     String userName;
     ArrayList<Word> voc = new ArrayList<>();  //여기다 주로 저장
     HashMap<String, Word> vocabMap = new HashMap<>();  //이건 검색용이라 저장에는 포함되지 않을 예정.
@@ -23,7 +24,7 @@ public class VocabManager extends FileManager{
 
             //초기 로딩시 HashMap도 자동 초기화
             for (Word w : list) {
-                vocabMap.put(w.getEng(),w);
+                vocabMap.put(w.getEng(), w);
             }
         }
     }
@@ -53,7 +54,7 @@ public class VocabManager extends FileManager{
                 System.out.println();
 
                 // 1~9만 허용함
-                if (!( (choice >= 1 && choice <= 9))) {
+                if (!((choice >= 1 && choice <= 9))) {
                     throw new MenuRangeCheckException("메뉴는 1~9만 입력 가능합니다.");
                 }
 
@@ -68,9 +69,9 @@ public class VocabManager extends FileManager{
                     case 9 -> System.out.println("종료합니다");
                     default -> System.out.println("메뉴를 다시 선택하세요");
                 }
-            }catch (MenuRangeCheckException e){
+            } catch (MenuRangeCheckException e) {
                 System.out.println(e.getMessage());
-            } catch (InputMismatchException e){
+            } catch (InputMismatchException e) {
                 System.out.println("정수로 입력해주세요.");
                 scan.nextLine(); // 버퍼 비우기
             }
@@ -86,27 +87,24 @@ public class VocabManager extends FileManager{
                 test_array.add(word);
             }
         }
-        if(test_array.isEmpty())
-        {
+        if (test_array.isEmpty()) {
             System.out.println("틀린 단어가 없습니다!");
             return;
         }
 
         System.out.println("한글 뜻을 보고 영어를 입력하세요");
         Collections.shuffle(test_array);
-        for(int i = 0;i<test_array.size();i++)
-        {
+        for (int i = 0; i < test_array.size(); i++) {
             System.out.print(test_array.get(i).getKors() + ": ");
             Scanner scan = new Scanner(System.in);
             String test_eng = scan.nextLine();
-            if(test_eng.equals(test_array.get(i).getEng()))
-            {
-                test_array.get(i).setWrong_number(test_array.get(i).getWrong_number()-1);
+            if (test_eng.equals(test_array.get(i).getEng())) {
+                test_array.get(i).setWrong_number(test_array.get(i).getWrong_number() - 1);
                 exam_pass_array.add(test_array.get(i));
             }
         }
         System.out.println("시험이 종료되었습니다 수고하셨습니다");
-        if(exam_pass_array.isEmpty())
+        if (exam_pass_array.isEmpty())
             System.out.println("맞춘 단어가 없습니다");
         else {
             System.out.println("---맞춘 단어---");
@@ -120,10 +118,8 @@ public class VocabManager extends FileManager{
         ArrayList<Word> wrongWordList = voc;
 
         System.out.println("\n------ " + userName + "의 오답노트 -------");
-        for(int i = 0;i<voc.size();i++)
-        {
-            if(wrongWordList.get(i).getWrong_number()!=0)
-            {
+        for (int i = 0; i < voc.size(); i++) {
+            if (wrongWordList.get(i).getWrong_number() != 0) {
                 System.out.println(wrongWordList.get(i) + "/ 틀린횟수: " + wrongWordList.get(i).getWrong_number());
             }
         }
@@ -133,8 +129,7 @@ public class VocabManager extends FileManager{
     //객관식 문제 (영어 주고 한글뜻 4개)
     private void quiz_multiChoice() {
         ArrayList<Word> quiz_array = voc;
-        if(quiz_array.size()<4)
-        {
+        if (quiz_array.size() < 4) {
             System.out.println("단어장에 최소 4개 이상의 단어가 들어가있어야 합니다.");
             return;
         }
@@ -144,48 +139,43 @@ public class VocabManager extends FileManager{
         System.out.println();
         long beforeStart_time_limit = 3_000_000_000L;
         long beforeStart_start = System.nanoTime();
-        while(true)
-        {
+        while (true) {
             long beforeStart_end = System.nanoTime();
-            if(beforeStart_end - beforeStart_start >=beforeStart_time_limit)
-            {
+            if (beforeStart_end - beforeStart_start >= beforeStart_time_limit) {
                 break;
             }
         }
-        int wrong_time=0;
-        Word quiz_word = quiz_array.get((int)(Math.random()*quiz_array.size()));
+        int wrong_time = 0;
+        Word quiz_word = quiz_array.get((int) (Math.random() * quiz_array.size()));
         ArrayList<String> quiz_word_kors = quiz_word.getKors();
-        System.out.println("주어진 한글: " + quiz_word_kors.get((int)(Math.random()*quiz_word_kors.size())));
+        System.out.println("주어진 한글: " + quiz_word_kors.get((int) (Math.random() * quiz_word_kors.size())));
         System.out.println();
         String choice1_eng = "";
         String choice2_eng = "";
         String choice3_eng = "";
         String quiz_word_eng = quiz_word.getEng();
 
-        while(choice1_eng.equals(choice2_eng) || choice2_eng.equals(choice3_eng) || choice1_eng.equals(choice3_eng) || choice1_eng.equals(quiz_word_eng) || choice2_eng.equals(quiz_word_eng) || choice3_eng.equals(quiz_word_eng))
-        {
-            Word choice1 = quiz_array.get((int)(Math.random()*quiz_array.size()));
+        while (choice1_eng.equals(choice2_eng) || choice2_eng.equals(choice3_eng) || choice1_eng.equals(choice3_eng) || choice1_eng.equals(quiz_word_eng) || choice2_eng.equals(quiz_word_eng) || choice3_eng.equals(quiz_word_eng)) {
+            Word choice1 = quiz_array.get((int) (Math.random() * quiz_array.size()));
             choice1_eng = choice1.getEng();
-            Word choice2 = quiz_array.get((int)(Math.random()*quiz_array.size()));
+            Word choice2 = quiz_array.get((int) (Math.random() * quiz_array.size()));
             choice2_eng = choice2.getEng();
-            Word choice3 = quiz_array.get((int)(Math.random()*quiz_array.size()));
+            Word choice3 = quiz_array.get((int) (Math.random() * quiz_array.size()));
             choice3_eng = choice3.getEng();
         }
 
         String[] arr = {quiz_word_eng, choice1_eng, choice2_eng, choice3_eng};
         Random rand = new Random();
-        for(int i = arr.length-1;i>0;i--)
-        {
-            int j = rand.nextInt(i+1);
+        for (int i = arr.length - 1; i > 0; i--) {
+            int j = rand.nextInt(i + 1);
             String temp = arr[i];
             arr[i] = arr[j];
             arr[j] = temp;
         }
-        for(int i = 0;i<4;i++)
-            System.out.println("("+(i+1)+") " + arr[i]);
+        for (int i = 0; i < 4; i++)
+            System.out.println("(" + (i + 1) + ") " + arr[i]);
 
-        while(wrong_time!=3)
-        {
+        while (wrong_time != 3) {
             System.out.print("사용자의 답: ");
             try {
                 int user_input = Integer.parseInt(scan.nextLine());
@@ -210,14 +200,11 @@ public class VocabManager extends FileManager{
             }
         }
 
-        if(wrong_time!=0&&wrong_time!=3)
-        {
-            quiz_word.setWrong_number(quiz_word.getWrong_number()+1);
-        }
-        else if(wrong_time == 3)
-        {
+        if (wrong_time != 0 && wrong_time != 3) {
+            quiz_word.setWrong_number(quiz_word.getWrong_number() + 1);
+        } else if (wrong_time == 3) {
             System.out.println("정답을 맞추지 못하였습니다");
-            quiz_word.setWrong_number(quiz_word.getWrong_number()+1);
+            quiz_word.setWrong_number(quiz_word.getWrong_number() + 1);
         }
     }
 
@@ -237,44 +224,35 @@ public class VocabManager extends FileManager{
         System.out.println();
         long beforeStart_time_limit = 3_000_000_000L;
         long beforeStart_start = System.nanoTime();
-        while(true)
-        {
+        while (true) {
             long beforeStart_end = System.nanoTime();
-            if(beforeStart_end - beforeStart_start >=beforeStart_time_limit)
-            {
+            if (beforeStart_end - beforeStart_start >= beforeStart_time_limit) {
                 break;
             }
         }
-        int wrong_time=0;
-        Word quiz_word = quiz_array.get((int)(Math.random()*quiz_array.size()));
+        int wrong_time = 0;
+        Word quiz_word = quiz_array.get((int) (Math.random() * quiz_array.size()));
         ArrayList<String> quiz_word_kors = quiz_word.getKors();
-        System.out.println("주어진 한글: " + quiz_word_kors.get((int)(Math.random()*quiz_word_kors.size())));
-        while(wrong_time != 3)
-        {
+        System.out.println("주어진 한글: " + quiz_word_kors.get((int) (Math.random() * quiz_word_kors.size())));
+        while (wrong_time != 3) {
             System.out.print("사용자의 답: ");
             String user_input = scan.nextLine();
             String user_input_trim_ver = user_input.trim();
-            if(user_input_trim_ver.equals(quiz_word.getEng()))
-            {
+            if (user_input_trim_ver.equals(quiz_word.getEng())) {
                 System.out.println("정답입니다!");
                 break;
-            }
-            else
-            {
+            } else {
                 System.out.println("정답이 아닙니다! 다른 답을 입력해주세요");
                 wrong_time++;
                 continue;
             }
         }
 
-        if(wrong_time!=0&&wrong_time!=3)
-        {
-            quiz_word.setWrong_number(quiz_word.getWrong_number()+1);
-        }
-        else if(wrong_time == 3)
-        {
+        if (wrong_time != 0 && wrong_time != 3) {
+            quiz_word.setWrong_number(quiz_word.getWrong_number() + 1);
+        } else if (wrong_time == 3) {
             System.out.println("정답을 맞추지 못하였습니다");
-            quiz_word.setWrong_number(quiz_word.getWrong_number()+1);
+            quiz_word.setWrong_number(quiz_word.getWrong_number() + 1);
         }
 
     }
@@ -327,35 +305,35 @@ public class VocabManager extends FileManager{
             }
         }
 
-        List<Word> result=new ArrayList<>(); //검색 결과를 저장할 리스트
+        List<Word> result = new ArrayList<>(); //검색 결과를 저장할 리스트
 
-        if(dir==1){
+        if (dir == 1) {
             System.out.print("검색할 영단어 입력: ");
-            String q1=scan.nextLine().trim();
-            result=findEngSubString(q1);
+            String q1 = scan.nextLine().trim();
+            result = findEngSubString(q1);
             //빈 입력 하면 전체가 출력됨. 방지
             if (q1.isEmpty()) {
                 System.out.println("빈 입력입니다. 검색을 취소합니다.");
                 return;
             }
-        } else if (dir==2) {
+        } else if (dir == 2) {
             System.out.print("검색할 한글 입력: ");
-            String q2=scan.nextLine().trim();
-            result=findKorSubString(q2);
+            String q2 = scan.nextLine().trim();
+            result = findKorSubString(q2);
             //마찬가지로 방지
             if (q2.isEmpty()) {
                 System.out.println("빈 입력입니다. 검색을 취소합니다.");
                 return;
             }
-        }else{
+        } else {
             System.out.println("잘못된 입력입니다. 1 혹은 2 중에 선택해주세요.");
             return;
         }
 
-        if(result.isEmpty()){
+        if (result.isEmpty()) {
             System.out.println("검색 결과가 없습니다.");
-        }else{
-            System.out.println("검색결과) "+result.size()+"개");
+        } else {
+            System.out.println("검색결과) " + result.size() + "개");
             for (Word word : result) {
                 System.out.println(word);
             }
@@ -364,10 +342,10 @@ public class VocabManager extends FileManager{
 
     //한글로 검색해서 찾기
     private List<Word> findKorSubString(String q) {
-        ArrayList<Word> res=new ArrayList<>();
+        ArrayList<Word> res = new ArrayList<>();
         for (Word w : voc) {
             for (String k : w.getKors()) {
-                if(k.contains(q)) {
+                if (k.contains(q)) {
                     res.add(w);
                     break;
                 }
@@ -378,10 +356,10 @@ public class VocabManager extends FileManager{
 
     //영어로 검색해서 찾기
     private List<Word> findEngSubString(String q) {
-        ArrayList<Word> res=new ArrayList<>();
+        ArrayList<Word> res = new ArrayList<>();
         for (Word w : voc) {
-            String s=w.getEng();
-            if(s.contains(q))
+            String s = w.getEng();
+            if (s.contains(q))
                 res.add(w);
         }
         return res;
@@ -389,32 +367,30 @@ public class VocabManager extends FileManager{
 
     //삭제 기능
     private void deleteVocab() {
-            if (voc.isEmpty()) { System.out.println("단어장이 비어있습니다."); return; }
+        if (voc.isEmpty()) { System.out.println("단어장이 비어있습니다."); return; }
+        System.out.print("[삭제] 영어 단어 입력: ");
+        String eng = scan.nextLine().trim();
 
-            System.out.print("[삭제] 영어 단어 입력: ");
-            String eng = scan.nextLine().trim().toLowerCase();
-
-            Word w = vocabMap.get(eng);
-            if(w == null) {
-                System.out.println("해당 단어가 존재하지 않습니다.");
-                return;
-            }
-
-            System.out.print("정말 삭제하시겠습니까? (Y/N) : ");
-            String confirm = scan.nextLine().trim().toUpperCase();
-            while(!confirm.equals("Y") && !confirm.equals("N")) {
-                System.out.print("Y/N 중에서 입력해주세요: ");
-                confirm = scan.nextLine().trim().toUpperCase();
-            }
-
-            if(confirm.equals("Y")) {
-                voc.remove(w);
-                vocabMap.remove(eng);
-                System.out.println(eng + "단어 삭제 완료!");
-            } else {
-                System.out.println("삭제 취소");
-            }
+        //맵에서 먼저 찾기
+        Word w = vocabMap.get(eng);
+        if (w == null) {
+            System.out.println("해당 단어가 존재하지 않습니다.");
+            return;
         }
+
+        System.out.print("정말 삭제하시겠습니까? (Y/N) : ");
+        String confirm = scan.nextLine().trim();
+        if (confirm.equalsIgnoreCase("Y")) {
+            // 1) 리스트에서 객체 제거
+            voc.remove(w);  // 같은 Word 객체 참조라서 이거면 ok
+            // 2) 맵에서도 키 제거
+            vocabMap.remove(eng);
+
+            System.out.println("'" + eng + "' 단어 삭제 완료!");
+        }else{
+            System.out.println("삭제 취소!");
+        }
+    }
 
     //수정 기능
     private void editVocab() {
@@ -525,11 +501,14 @@ public class VocabManager extends FileManager{
 
     //추가 기능
     //voc 와 vocabMap 업데이트로 수정 -- 강동훈
+    //1. 영단어가 이미 있을 시 --> 입력한 한글 뜻이 이미 있으면, 중복이라 추가 안하고 종료
+    //이어서 새로운 뜻이 하나라도 있으면, 그 새로운 뜻만 맨 뒤에 추가
+    //2. 영단어가 없으면, 새로운 Word 하나 만들어서, voc 와 vocabMap 에 전부 추가
     private void addVocab() {
         System.out.print("[추가] 추가할 영단어를 입력하세요: ");
         String eng = scan.nextLine().trim();
 
-        // 영어 단어 유효성 검사
+        // 영어 단어 유효성 검사 (한글이나 이상한게 껴있으면 reject)
         if (eng.isEmpty() || !eng.matches("[a-zA-Z]+")) {
             System.out.println("유효하지 않은 영어 단어입니다. (영문자만 입력)");
             return;
@@ -557,11 +536,13 @@ public class VocabManager extends FileManager{
         }
 
         // 이미 존재하는 영단어인지 검사
+        //이건 복사본이 아니라, 해당 Word 객체를 가리킴. (같은 주소값으로 참조)
         Word existing = vocabMap.get(eng);
 
         if (existing != null) {
-            // 1, 2번 케이스: 기존 단어에 대해 중복 여부 확인
+            // 1-1,1-2번 케이스: 기존 단어에 대해 중복 여부 확인
             int addedCount = 0;
+            //newKors 는 내가 등록할 한글 뜻들. 이게 기존 단어에 포함되어있는지 체크
             for (String k : newKors) {
                 if (!existing.getKors().contains(k)) {
                     existing.getKors().add(k);  // 새 뜻만 뒤에 추가
