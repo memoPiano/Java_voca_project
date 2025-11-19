@@ -50,6 +50,10 @@ public class FileManager {
                 }
                 w.setWrong_number(Integer.parseInt(wrong_number));  //틀린 횟수 넣기
                 list.add(w);  //한 줄에서 만든 단어 추가
+
+                //아래는 디버깅용... 스플릿이 제대로 됐는지 체크
+//                System.out.println("읽은 줄: [" + str + "]");
+//                System.out.println("조각 개수: " + temp.length);
             }
         } catch (FileNotFoundException e) {
             throw new RuntimeException(e);
