@@ -271,7 +271,7 @@ public class VocabManager extends FileManager {
             } else {
                 System.out.println("틀렸습니다");
                 wrong_time++;
-                continue;
+                //continue;
             }
         }
 
@@ -316,7 +316,7 @@ public class VocabManager extends FileManager {
             } else {
                 System.out.println("정답이 아닙니다! 다른 답을 입력해주세요");
                 wrong_time++;
-                continue;
+                //continue;
             }
         }
 
@@ -379,7 +379,7 @@ public class VocabManager extends FileManager {
         int dir = scan.nextInt();
         scan.nextLine();
 
-        List<Word> result = new ArrayList<>(); //검색 결과를 저장할 리스트
+        List<Word> result; //검색 결과를 저장할 리스트
 
         if (dir == 1) {
             System.out.print("검색할 영단어 입력: ");
