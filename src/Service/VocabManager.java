@@ -287,6 +287,13 @@ public class VocabManager extends FileManager {
 
     //한글 뜻 보여주고 영어 맞추기
     private void quiz_essay() {
+
+        if (voc.isEmpty()) {
+            System.out.println("단어장이 비어있어 퀴즈를 진행할 수 없습니다.");
+            return;
+        }
+
+
         ArrayList<Word> quiz_array = voc;
         totalQuizCount++;
         System.out.println("----------------------------");
@@ -441,6 +448,7 @@ public class VocabManager extends FileManager {
 
     //삭제 기능
     private void deleteVocab() {
+        if (voc.isEmpty()) { System.out.println("단어장이 비어있습니다."); return; }
         System.out.print("[삭제] 영어 단어 입력: ");
         String eng = scan.nextLine().trim();
 
@@ -467,6 +475,7 @@ public class VocabManager extends FileManager {
 
     //수정 기능
     private void editVocab() {
+        if (voc.isEmpty()) { System.out.println("단어장이 비어있습니다."); return; }
         System.out.print("[수정] 영어 단어 입력: ");
         String eng = scan.nextLine().trim().toLowerCase();
 
