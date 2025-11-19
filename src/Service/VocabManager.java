@@ -36,6 +36,7 @@ public class VocabManager extends FileManager{
             System.out.println("4) 단어 검색 (영→한 / 한→영)");
             System.out.println("5) 퀴즈");
             System.out.println("6) 오답노트");
+            System.out.println("7) 시험보기");
             System.out.println("9) 종료");
             System.out.print("메뉴 선택: ");
 
@@ -50,14 +51,55 @@ public class VocabManager extends FileManager{
                 case 4 -> searchVocab();
                 case 5 -> quiz();
                 case 6 -> show_wrongWord();
+                case 7 -> voc_test();
                 case 9 -> System.out.println("종료합니다");
                 default -> System.out.println("메뉴를 다시 선택하세요");
             }
         }
     }
 
+    private void voc_test() {
+        ArrayList<Word> test_array = new ArrayList<>();
+        ArrayList<Word> exam_pass_array = new ArrayList<>();
+
+        for (Word word : voc) {
+            if (word.getWrong_number() != 0) {
+                test_array.add(word);
+            }
+        }
+        if(test_array.isEmpty())
+        {
+            System.out.println("틀린 단어가 없습니다!");
+            return;
+        }
+
+        System.out.println("한글 뜻을 보고 영어를 입력하세요");
+        Collections.shuffle(test_array);
+        for(int i = 0;i<test_array.size();i++)
+        {
+            System.out.print(test_array.get(i).getKors() + ": ");
+            Scanner scan = new Scanner(System.in);
+            String test_eng = scan.nextLine();
+            if(test_eng.equals(test_array.get(i).getEng()))
+            {
+                test_array.get(i).setWrong_number(test_array.get(i).getWrong_number()-1);
+                exam_pass_array.add(test_array.get(i));
+            }
+        }
+        System.out.println("시험이 종료되었습니다 수고하셨습니다");
+        if(exam_pass_array.isEmpty())
+            System.out.println("맞춘 단어가 없습니다");
+        else {
+            System.out.println("---맞춘 단어---");
+            for (Word word : exam_pass_array) {
+                System.out.println(word);
+            }
+        }
+    }
+
     private void show_wrongWord() {
         ArrayList<Word> wrongWordList = voc;
+
         System.out.println("\n------ " + userName + "의 오답노트 -------");
         for(int i = 0;i<voc.size();i++)
         {
@@ -109,18 +151,17 @@ public class VocabManager extends FileManager{
             choice3_eng = choice3.getEng();
         }
 
-        int[] order = {0,1,2,3};
-        Random rand = new Random();
-        for(int i =0;i<4;i++)
-        {
-            int r = rand.nextInt(4);
-            int temp = order[i];
-            order[i] = order[r];
-            order[r] = temp;
-        }
         String[] arr = {quiz_word_eng, choice1_eng, choice2_eng, choice3_eng};
+        Random rand = new Random();
+        for(int i = arr.length-1;i>0;i--)
+        {
+            int j = rand.nextInt(i+1);
+            String temp = arr[i];
+            arr[i] = arr[j];
+            arr[j] = temp;
+        }
         for(int i = 0;i<4;i++)
-            System.out.println("("+i+") " + arr[order[i]]);
+            System.out.println("("+i+") " + arr[i]);
 
         while(wrong_time!=3)
         {
@@ -128,7 +169,7 @@ public class VocabManager extends FileManager{
             int user_input = scan.nextInt();
             scan.nextLine();
 
-            if(arr[user_input-1].equals(quiz_word_eng))
+            if(arr[user_input].equals(quiz_word_eng))
             {
                 System.out.println("정답입니다!");
                 break;
