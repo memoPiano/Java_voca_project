@@ -14,4 +14,4 @@ intelligent	지적인	0
 invent	발명하다/ 만들다	0
 invention	발명	0
 play	역할/ 놀이	0
-sex	성교/ 성별	0
+ugly	못생긴	0

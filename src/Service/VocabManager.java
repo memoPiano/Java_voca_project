@@ -49,7 +49,7 @@ public class VocabManager extends FileManager{
                 case 3 -> deleteVocab();
                 case 4 -> searchVocab();
                 case 5 -> quiz();
-                case 7 -> show_wrongWord();
+                case 6 -> show_wrongWord();
                 case 9 -> System.out.println("종료합니다");
                 default -> System.out.println("메뉴를 다시 선택하세요");
             }
@@ -57,7 +57,15 @@ public class VocabManager extends FileManager{
     }
 
     private void show_wrongWord() {
-
+        ArrayList<Word> wrongWordList = voc;
+        System.out.println("\n------ " + userName + "의 오답노트 -------");
+        for(int i = 0;i<voc.size();i++)
+        {
+            if(wrongWordList.get(i).getWrong_number()!=0)
+            {
+                System.out.println(wrongWordList.get(i) + "/ 틀린횟수: " + wrongWordList.get(i).getWrong_number());
+            }
+        }
     }
 
     private void quiz_multiChoice() {
@@ -203,13 +211,11 @@ public class VocabManager extends FileManager{
         scan.nextLine();
         System.out.println();
 
-        switch (user_choice)
-        {
+        switch (user_choice) {
             case 1 -> quiz_multiChoice();
             case 2 -> quiz_essay();
             default -> System.out.println("메뉴를 다시 선택하세요");
         }
-        return;
     }
 
     private void searchVocab() {
