@@ -45,7 +45,7 @@ public class VocabManager extends FileManager {
             System.out.println("5) 퀴즈");
             System.out.println("6) 오답노트 보기");
             System.out.println("7) 오답노트 재시험");
-            System.out.println("8) 오늘의 추천 10개 단어");
+            System.out.println("8) 오늘의 추천 단어");
             System.out.println("9) 종료");
             System.out.print("메뉴 선택: ");
 
@@ -67,7 +67,7 @@ public class VocabManager extends FileManager {
                     case 5 -> quiz();
                     case 6 -> show_wrongWord();
                     case 7 -> voc_test();
-                    case 8 -> todayWord();
+                    case 8 -> showRandomWord();
                     case 9 -> System.out.println("종료합니다");
                     default -> System.out.println("메뉴를 다시 선택하세요");
                 }
@@ -80,9 +80,22 @@ public class VocabManager extends FileManager {
         }
     }
 
-    private void todayWord() {
-        System.out.println("아직 미구현. 메뉴 8번에 해당");
+    private void showRandomWord() {
+        if (voc.isEmpty()) {
+            System.out.println("단어장이 비어있습니다.");
+            return;
+        }
+
+        Random rand = new Random();
+        int idx = rand.nextInt(voc.size());
+        Word w = voc.get(idx);
+
+        System.out.println("\n====== 오늘의 랜덤 단어 ======");
+        System.out.println("영어: " + w.getEng());
+        System.out.println("뜻  : " + w.getKors());
+        System.out.println("===============================");
     }
+
 
     //오답 단어만 재시험
     private void voc_test() {
