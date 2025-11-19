@@ -187,19 +187,26 @@ public class VocabManager extends FileManager{
         while(wrong_time!=3)
         {
             System.out.print("사용자의 답: ");
-            int user_input = scan.nextInt();
-            scan.nextLine();
+            try {
+                int user_input = Integer.parseInt(scan.nextLine());
+                //scan.nextLine();
+                user_input--; //답이랑 매칭이 안돼있어서 추가했습니다
 
-            if(arr[user_input].equals(quiz_word_eng))
-            {
-                System.out.println("정답입니다!");
-                break;
-            }
-            else
-            {
-                System.out.println("틀렸습니다");
-                wrong_time++;
-                continue;
+                if (user_input < 0 || user_input >= 4) {
+                    System.out.println("1~4 사이의 번호를 입력해주세요.");
+                    continue;
+                }
+
+                if (arr[user_input].equals(quiz_word_eng)) {
+                    System.out.println("정답입니다!");
+                    break;
+                } else {
+                    System.out.println("틀렸습니다");
+                    wrong_time++;
+                    continue;
+                }
+            }catch (NumberFormatException e) {
+                System.out.println("숫자만 입력해주세요");
             }
         }
 
@@ -216,6 +223,13 @@ public class VocabManager extends FileManager{
 
     //한글 뜻 보여주고 영어 맞추기
     private void quiz_essay() {
+
+        if (voc.isEmpty()) {
+            System.out.println("단어장이 비어있어 퀴즈를 진행할 수 없습니다.");
+            return;
+        }
+
+
         ArrayList<Word> quiz_array = voc;
         System.out.println("----------------------------");
         System.out.println("다음으로 보여지는 한글 뜻을 가지고 영어를 입력하시면 됩니다. 기회는 총 3번입니다");
@@ -271,8 +285,20 @@ public class VocabManager extends FileManager{
         System.out.println("1) 객관식 퀴즈");
         System.out.println("2) 주관식 퀴즈");
         System.out.print("퀴즈 선택: ");
-        int user_choice = scan.nextInt();
-        scan.nextLine();
+        int user_choice = -1;
+        while (true) {
+            try {
+                user_choice = Integer.parseInt(scan.nextLine());
+                if(user_choice==1 || user_choice==2) {
+                    break;
+                }else {
+                    System.out.println("1또는2를 입력하세요");
+                }
+            } catch (NumberFormatException e) {
+                System.out.println("숫자를 입력해주세요.");
+            }
+        }
+
         System.out.println();
 
         switch (user_choice) {
@@ -283,10 +309,23 @@ public class VocabManager extends FileManager{
     }
 
     private void searchVocab() {
-        System.out.println("\n[검색] 방향을 선택하세요: 1) 영->한 2) 한->영");
-        System.out.print(">> ");
-        int dir=scan.nextInt();
-        scan.nextLine();
+        if (voc.isEmpty()) { System.out.println("단어장이 비어있습니다."); return; }
+        int dir=-1;
+        while (true) {
+            System.out.println("\n[검색] 방향을 선택하세요: 1) 영->한 2) 한->영");
+            System.out.print(">> ");
+            try {
+                dir = Integer.parseInt(scan.nextLine());
+                // 1이나 2면 통과(반복 종료)
+                if (dir == 1 || dir == 2) {
+                    break;
+                } else {
+                    System.out.println("잘못된 입력입니다. 1 혹은 2 중에 선택해주세요.");
+                }
+            } catch (NumberFormatException e) {
+                System.out.println("숫자만 입력해주세요.");
+            }
+        }
 
         List<Word> result=new ArrayList<>(); //검색 결과를 저장할 리스트
 
@@ -350,6 +389,8 @@ public class VocabManager extends FileManager{
 
     //삭제 기능
     private void deleteVocab() {
+            if (voc.isEmpty()) { System.out.println("단어장이 비어있습니다."); return; }
+
             System.out.print("[삭제] 영어 단어 입력: ");
             String eng = scan.nextLine().trim().toLowerCase();
 
@@ -377,6 +418,7 @@ public class VocabManager extends FileManager{
 
     //수정 기능
     private void editVocab() {
+        if (voc.isEmpty()) { System.out.println("단어장이 비어있습니다."); return; }
         System.out.print("[수정] 영어 단어 입력: ");
         String eng = scan.nextLine().trim().toLowerCase();
 
@@ -396,8 +438,25 @@ public class VocabManager extends FileManager{
         System.out.println("4) 한글 뜻 전체 수정");
         System.out.print("선택: ");
 
-        int choice = scan.nextInt();
-        scan.nextLine(); // 개행 제거
+        int choice =-1;
+
+        while (true) {
+            System.out.print("선택: ");
+            try {
+                choice = Integer.parseInt(scan.nextLine());
+                if (choice >= 1 && choice <= 4) {
+                    break;
+                } else {
+                    System.out.println("1~4 사이의 메뉴를 선택해주세요.");
+                }
+            } catch (NumberFormatException e) {
+                System.out.println("숫자를 입력해주세요.");
+            }
+        }
+
+
+        //int choice = scan.nextInt();
+        //scan.nextLine(); // 개행 제거
 
         switch (choice) {
 

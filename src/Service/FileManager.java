@@ -48,11 +48,16 @@ public class FileManager {
                         w.getKors().add(kor);
                     }
                 }
-                w.setWrong_number(Integer.parseInt(wrong_number));  //틀린 횟수 넣기
-                list.add(w);  //한 줄에서 만든 단어 추가
+                try {
+                    w.setWrong_number(Integer.parseInt(wrong_number));  //틀린 횟수 넣기
+                    list.add(w);  //한 줄에서 만든 단어 추가
+                } catch (NumberFormatException e){
+                    System.out.println("파일 형식 오류로 건너뜀"+str);
+                }
             }
         } catch (FileNotFoundException e) {
-            throw new RuntimeException(e);
+            System.out.println("기존 데이터 파일이 없습니다.새로 시작합니다.");
+            return new ArrayList<>();
         }
         return list; //만들어진 단어들 리스트 반환
     }
