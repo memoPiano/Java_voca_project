@@ -209,7 +209,7 @@ public class VocabManager extends FileManager {
 
 
 
-    //객관식 문제 (영어 주고 한글뜻 4개)
+    //객관식 쉬움모드
     private void quiz_multiChoice() {
         ArrayList<Word> quiz_array = voc;
         totalQuizCount++;
@@ -261,17 +261,27 @@ public class VocabManager extends FileManager {
 
         while (wrong_time != 3) {
             System.out.print("사용자의 답: ");
-            int user_input = scan.nextInt();
-            scan.nextLine();
+            try {
+                int user_input = Integer.parseInt(scan.nextLine());
+                //scan.nextLine();
+                user_input--; //답이랑 매칭이 안돼있어서 추가했습니다
 
-            if (arr[user_input].equals(quiz_word_eng)) {
-                System.out.println("정답입니다!");
-                correctCount++;
-                break;
-            } else {
-                System.out.println("틀렸습니다");
-                wrong_time++;
-                //continue;
+                if (user_input < 0 || user_input >= 4) {
+                    System.out.println("1~4 사이의 번호를 입력해주세요.");
+                    continue;
+                }
+
+                if (arr[user_input].equals(quiz_word_eng)) {
+                    System.out.println("정답입니다!");
+                    correctCount++;
+                    break;
+                } else {
+                    System.out.println("틀렸습니다");
+                    wrong_time++;
+                    //continue;
+                }
+            }catch (NumberFormatException e) {
+                System.out.println("숫자만 입력해주세요");
             }
         }
 
@@ -285,14 +295,13 @@ public class VocabManager extends FileManager {
         }
     }
 
-    //한글 뜻 보여주고 영어 맞추기
+    //주관식 (한글 보여주고 영어 맞추기)
     private void quiz_essay() {
 
         if (voc.isEmpty()) {
             System.out.println("단어장이 비어있어 퀴즈를 진행할 수 없습니다.");
             return;
         }
-
 
         ArrayList<Word> quiz_array = voc;
         totalQuizCount++;
@@ -335,7 +344,6 @@ public class VocabManager extends FileManager {
             quiz_word.setWrong_number(quiz_word.getWrong_number() + 1);
             wrongCount++;
         }
-
     }
 
     //퀴즈 메서드
@@ -344,14 +352,26 @@ public class VocabManager extends FileManager {
         System.out.println("1) 객관식 퀴즈");
         System.out.println("2) 주관식 퀴즈");
         System.out.print("퀴즈 선택: ");
-        int user_choice = scan.nextInt();
-        scan.nextLine();
-        System.out.println();
 
-        switch (user_choice) {
-            case 1 -> quiz_multiMenu();   // 객관식 메뉴로 분리
-            case 2 -> quiz_essay();
-            default -> System.out.println("메뉴를 다시 선택하세요");
+        try {
+            int user_choice = scan.nextInt();
+            scan.nextLine();
+            System.out.println();
+
+            if (!((user_choice >= 1 && user_choice <= 2))) {
+                throw new MenuRangeCheckException("메뉴는 1 or 2만 입력 가능합니다.");
+            }
+
+            switch (user_choice) {
+                case 1 -> quiz_multiMenu();   // 객관식 메뉴로 분리
+                case 2 -> quiz_essay();
+                default -> System.out.println("메뉴를 다시 선택하세요");
+            }
+        }catch (MenuRangeCheckException e){
+            System.out.println(e.getMessage());
+        } catch (InputMismatchException e){
+            System.out.println("정수만 입력해주세요");
+            scan.nextLine(); // 버퍼 비우기
         }
     }
 
@@ -362,14 +382,25 @@ public class VocabManager extends FileManager {
         System.out.println("2) Hard 모드 ");
         System.out.print("선택: ");
 
-        int mode = scan.nextInt();
-        scan.nextLine();
-        System.out.println();
+        try {
+            int mode = scan.nextInt();
+            scan.nextLine();
+            System.out.println();
 
-        switch (mode) {
-            case 1 -> quiz_multiChoice();        // 친구가 만든 기존 메서드
-            case 2 -> quiz_multiChoiceHard();    // 우리가 새로 만드는 하드 모드
-            default -> System.out.println("메뉴를 다시 선택하세요");
+            if (!((mode >= 1 && mode <= 2))) {
+                throw new MenuRangeCheckException("메뉴는 1 or 2만 입력 가능합니다.");
+            }
+
+            switch (mode) {
+                case 1 -> quiz_multiChoice();        // by 의찬
+                case 2 -> quiz_multiChoiceHard();    // 하드모드
+                default -> System.out.println("메뉴를 다시 선택하세요");
+            }
+        }catch (MenuRangeCheckException e){
+            System.out.println(e.getMessage());
+        }catch (InputMismatchException e){
+            System.out.println("정수만 입력해주세요");
+            scan.nextLine(); // 버퍼 비우기
         }
     }
 
@@ -378,13 +409,26 @@ public class VocabManager extends FileManager {
     }
 
 
-
-
     private void searchVocab() {
-        System.out.println("\n[검색] 방향을 선택하세요: 1) 영->한 2) 한->영");
-        System.out.print(">> ");
-        int dir = scan.nextInt();
-        scan.nextLine();
+        if (voc.isEmpty()) {
+            System.out.println("단어장이 비어있습니다."); return;
+        }
+        int dir=-1;
+        while (true) {
+            System.out.println("\n[검색] 방향을 선택하세요: 1) 영->한 2) 한->영");
+            System.out.print(">> ");
+            try {
+                dir = Integer.parseInt(scan.nextLine());
+                // 1이나 2면 통과(반복 종료)
+                if (dir == 1 || dir == 2) {
+                    break;
+                } else {
+                    System.out.println("잘못된 입력입니다. 1 혹은 2 중에 선택해주세요.");
+                }
+            } catch (NumberFormatException e) {
+                System.out.println("숫자만 입력해주세요.");
+            }
+        }
 
         List<Word> result; //검색 결과를 저장할 리스트
 
@@ -495,8 +539,21 @@ public class VocabManager extends FileManager {
         System.out.println("4) 한글 뜻 전체 수정");
         System.out.print("선택: ");
 
-        int choice = scan.nextInt();
-        scan.nextLine(); // 개행 제거
+        int choice =-1;
+
+        while (true) {
+            System.out.print("선택: ");
+            try {
+                choice = Integer.parseInt(scan.nextLine());
+                if (choice >= 1 && choice <= 4) {
+                    break;
+                } else {
+                    System.out.println("1~4 사이의 메뉴를 선택해주세요.");
+                }
+            } catch (NumberFormatException e) {
+                System.out.println("숫자를 입력해주세요.");
+            }
+        }
 
         switch (choice) {
 
