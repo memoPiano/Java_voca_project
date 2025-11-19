@@ -75,8 +75,6 @@ public class FileManager {
                 }
                 output.print("\t"); //탭으로 하나 띄고
                 output.println(w.getWrong_number()); //틀린 횟수 가져오기
-
-                output.println(); //줄바꿈
             }
         } catch (FileNotFoundException e) {
             throw new RuntimeException(e);
