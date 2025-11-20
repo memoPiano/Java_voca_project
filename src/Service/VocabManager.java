@@ -50,7 +50,7 @@ public class VocabManager extends FileManager {
     //메뉴
     public void menu() {
         int choice = 0;
-        while (choice != 9) {
+        while (choice != 10) {
             System.out.println("\n------ " + userName + "의 단어장 -------");
             System.out.println("1) 단어 추가");
             System.out.println("2) 단어 수정 (영어/뜻)");
@@ -60,7 +60,8 @@ public class VocabManager extends FileManager {
             System.out.println("6) 오답노트 보기");
             System.out.println("7) 오답노트 재시험");
             System.out.println("8) 오늘의 추천 단어");
-            System.out.println("9) 종료");
+            System.out.println("9) 즐겨찾기");
+            System.out.println("10) 종료");
             System.out.print("메뉴 선택: ");
 
             try {
@@ -68,9 +69,9 @@ public class VocabManager extends FileManager {
                 scan.nextLine();
                 System.out.println();
 
-                // 1~9만 허용함
-                if (!((choice >= 1 && choice <= 9))) {
-                    throw new MenuRangeCheckException("메뉴는 1~9만 입력 가능합니다.");
+                // 1~10만 허용함
+                if (!((choice >= 1 && choice <= 10))) {
+                    throw new MenuRangeCheckException("메뉴는 1~10만 입력 가능합니다.");
                 }
 
                 switch (choice) {
@@ -82,7 +83,8 @@ public class VocabManager extends FileManager {
                     case 6 -> show_wrongWord();
                     case 7 -> voc_test();
                     case 8 -> showRandomWords(5);
-                    case 9 -> System.out.println("종료합니다");
+                    case 9 -> bookMark();
+                    case 10 -> System.out.println("종료합니다");
                     default -> System.out.println("메뉴를 다시 선택하세요");
                 }
             } catch (MenuRangeCheckException e) {
@@ -94,13 +96,88 @@ public class VocabManager extends FileManager {
         }
     }
 
+    private void bookMark() {
+        ArrayList<Word> bookMark_list = new ArrayList<>();
+        for (Word word : voc) {
+            if (word.isBookMark()) {
+                bookMark_list.add(word);
+            }
+        }
+        System.out.println("===== 즐겨찾기 =====");
+        for (Word word : bookMark_list) {
+            System.out.println(word);
+        }
+        System.out.print("\n1) 즐겨찾기 추가하기 2) 즐겨찾기 삭제하기 3) 메뉴로 돌아가기 ");
+        try{
+            int user_input = scan.nextInt();
+            scan.nextLine();
+            if(user_input !=1&&user_input!=2&&user_input !=3)
+                throw new MenuRangeCheckException("메뉴는 1~3만 입력 가능합니다.");
+            else if(user_input == 1)
+            {
+                add_bookMark();
+                return;
+            }
+            else if(user_input == 2)
+            {
+                remove_bookMark(bookMark_list);
+                return;
+            }
+            else
+                return;
+        }
+        catch (MenuRangeCheckException e) {
+            System.out.println(e.getMessage());
+        } catch (InputMismatchException e) {
+            System.out.println("정수로 입력해주세요.");
+            scan.nextLine(); // 버퍼 비우기
+        }
+    }
+
+    private void remove_bookMark(ArrayList<Word> bookMark_list) {
+        System.out.print("[즐겨찾기] 즐겨찾기 삭제할 영단어를 입력하세요: ");
+        String eng = scan.nextLine().trim();
+
+        for(int i = 0;i<bookMark_list.size();i++)  //처음부터 즐겨찾기에 있는 것만 검사(true인 것만 검사)
+        {
+            if(eng.equals(bookMark_list.get(i).getEng()))  //즐겨찾기 삭제할 단어랑 즐겨찾기 단어(bookmark = true)가 일치하는 게 있다면
+            {
+                System.out.println("삭제 되었습니다!");
+                bookMark_list.get(i).setBookMark(false); //false로 바꿔서 삭제시키고
+                return;  //종료 -> 어짜피 단어 리스트에 같은 단어는 안들어가므로 바로 종료해도 됨
+            }
+        }
+        System.out.println("일치하는 단어가 즐겨찾기에 없습니다");
+    }
+
+    private void add_bookMark() {
+        System.out.print("[즐겨찾기] 즐겨찾기할 영단어를 입력하세요: ");
+        String eng = scan.nextLine().trim();
+
+        for(int i = 0;i<voc.size();i++)
+        {
+            if(eng.equals(voc.get(i).getEng()))
+            {
+                if(voc.get(i).isBookMark())  //즐겨찾기에 있는 단어인지 검사
+                {
+                    System.out.println("이미 즐겨찾기에 있습니다");
+                    return;
+                }
+                System.out.println("즐겨찾기 단어 추가가 완료 되었습니다");  //즐겨찾기할 단어가 전체 리스트에 있다면
+                voc.get(i).setBookMark(true);
+                return;
+            }
+        }
+        System.out.println("일치하는 단어가 단어장에 없습니다!");
+    }
+
+
     //랜덤 단어를 count개 만큼 보여줌
     private void showRandomWords(int count) {
         if (voc.isEmpty()) {
             System.out.println("단어장이 비어있습니다.");
             return;
         }
-
         //이미 뽑은 인덱스를 저장해 두는 Set
         //같은 단어 두 번 추천 안 나오게 하기 위함.
         Set<Integer> used = new HashSet<>();
