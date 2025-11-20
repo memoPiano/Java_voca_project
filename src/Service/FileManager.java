@@ -6,6 +6,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.PrintWriter;
 import java.util.*;
+import java.io.FileWriter;
 
 public class FileManager {
     private String filePath;
@@ -85,5 +86,60 @@ public class FileManager {
             throw new RuntimeException(e);
         }
     }
+    
+    // 예문 파일을 불러서 HashMap으로 반환하는 메소드
+    // 파일 형식 예:  apple/This is an apple.
+    public HashMap<String, ArrayList<String>> loadExamples(String filePath) {
+
+        // HashMap 생성: key = 영어 단어, value = 예문 리스트
+        HashMap<String, ArrayList<String>> exampleMap = new HashMap<>();
+
+        try (Scanner sc = new Scanner(new File(filePath))) {
+
+            // 파일에서 줄 단위로 읽기
+            while (sc.hasNextLine()) {
+                String line = sc.nextLine();
+
+                // "/" 기준으로 영어단어와 예문을 분리
+                // 형식이 잘못한다면(parts 길이가 2가 아니면) 무시
+                String[] parts = line.split("/");
+                if (parts.length != 2) continue;
+
+                String eng = parts[0];     // 영어 단어
+                String example = parts[1]; // 예문
+
+                // 해당 영어 단어가 처음 등장하면 새로운 리스트 생성
+                exampleMap.putIfAbsent(eng, new ArrayList<>());
+
+                // 예문 리스트에 예문 추가
+                exampleMap.get(eng).add(example);
+            }
+
+        } catch (Exception e) {
+            // 파일을 읽지 못한다면 오류 메시지 출력
+            System.out.println("예문 파일을 불을 수 없습니다: " + e.getMessage());
+        }
+
+        // 완성된 <영어단어 - 예문 리스트> 맵 반환
+        return exampleMap;
+    }
+    // 예문을 파일에 추가로 저장하는 메소드
+// filePath : 예문 파일 경로
+// eng      : 영어 단어
+// example  : 해당 단어의 예문
+// 파일에 새로운 예문을 한 줄씩 추가(append)하는 방식으로 동작함
+    public void appendExample(String filePath, String eng, String example) {
+
+        // FileWriter의 두 번째 인자 true → 기존 내용을 덮어쓰지 않고 뒤에 이어서 작성(append) 모드
+        try (PrintWriter pw = new PrintWriter(new FileWriter(filePath, true))) {
+
+            // 파일에 "영어단어/예문" 형식으로 한 줄 추가
+            pw.println(eng + "/" + example);
+
+        } catch (Exception e) {
+
+            // 파일 저장 중 오류가 발생했을 때 메시지 출력
+            System.out.println("예문 저장 실패: " + e.getMessage());
+        }
 
 }//클래스의 끝
