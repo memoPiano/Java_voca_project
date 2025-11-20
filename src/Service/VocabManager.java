@@ -52,7 +52,7 @@ public class VocabManager extends FileManager {
     //메뉴
     public void menu() {
         int choice = 0;
-        while (choice != 10) {
+        while (choice != 11) {
             System.out.println("\n------ " + userName + "의 단어장 -------");
             System.out.println("1) 단어 추가");
             System.out.println("2) 단어 수정 (영어/뜻)");
@@ -63,7 +63,8 @@ public class VocabManager extends FileManager {
             System.out.println("7) 오답노트 재시험");
             System.out.println("8) 오늘의 추천 단어");
             System.out.println(("9) 예문 추가" ));
-            System.out.println("10) 종료");
+            System.out.println("10) 즐겨찾기");
+            System.out.println("11) 종료");
             System.out.print("메뉴 선택: ");
 
             try {
@@ -72,8 +73,8 @@ public class VocabManager extends FileManager {
                 System.out.println();
 
                 // 1~9만 허용함
-                if (!((choice >= 1 && choice <= 10))) {
-                    throw new MenuRangeCheckException("메뉴는 1~10만 입력 가능합니다.");
+                if (!((choice >= 1 && choice <= 11))) {
+                    throw new MenuRangeCheckException("메뉴는 1~11만 입력 가능합니다.");
                 }
 
                 switch (choice) {
@@ -86,7 +87,8 @@ public class VocabManager extends FileManager {
                     case 7 -> voc_test();
                     case 8 -> showRandomWord();
                     case 9 -> addExampleSentence();
-                    case 10 -> System.out.println("종료합니다");
+                    case 10 -> bookMark();
+                    case 11 -> System.out.println("종료합니다");
                     default -> System.out.println("메뉴를 다시 선택하세요");
                 }
             } catch (MenuRangeCheckException e) {
@@ -96,6 +98,81 @@ public class VocabManager extends FileManager {
                 scan.nextLine(); // 버퍼 비우기
             }
         }
+    }
+
+    private void bookMark() {
+        ArrayList<Word> bookMark_list = new ArrayList<>();
+		for (Word word : voc) {
+			if (word.isBookMark()) {
+				bookMark_list.add(word);
+			}
+		}
+        System.out.println("===== 즐겨찾기 =====");
+		for (Word word : bookMark_list) {
+			System.out.println(word);
+		}
+        System.out.print("\n1) 즐겨찾기 추가하기 2) 즐겨찾기 삭제하기 3) 메뉴로 돌아가기 ");
+        try{
+            int user_input = scan.nextInt();
+            scan.nextLine();
+            if(user_input !=1&&user_input!=2&&user_input !=3)
+                throw new MenuRangeCheckException("메뉴는 1~3만 입력 가능합니다.");
+            else if(user_input == 1)
+            {
+                add_bookMark();
+                return;
+            }
+            else if(user_input == 2)
+            {
+                remove_bookMark(bookMark_list);
+                return;
+            }
+            else
+                return;
+        }
+        catch (MenuRangeCheckException e) {
+            System.out.println(e.getMessage());
+        } catch (InputMismatchException e) {
+            System.out.println("정수로 입력해주세요.");
+            scan.nextLine(); // 버퍼 비우기
+        }
+    }
+
+    private void remove_bookMark(ArrayList<Word> bookMark_list) {
+        System.out.print("[즐겨찾기] 즐겨찾기 삭제할 영단어를 입력하세요: ");
+        String eng = scan.nextLine().trim();
+
+        for(int i = 0;i<bookMark_list.size();i++)  //처음부터 즐겨찾기에 있는 것만 검사(true인 것만 검사)
+        {
+            if(eng.equals(bookMark_list.get(i).getEng()))  //즐겨찾기 삭제할 단어랑 즐겨찾기 단어(bookmark = true)가 일치하는 게 있다면
+            {
+                System.out.println("삭제 되었습니다!");
+                bookMark_list.get(i).setBookMark(false); //false로 바꿔서 삭제시키고
+                return;  //종료 -> 어짜피 단어 리스트에 같은 단어는 안들어가므로 바로 종료해도 됨
+            }
+        }
+        System.out.println("일치하는 단어가 즐겨찾기에 없습니다");
+    }
+
+    private void add_bookMark() {
+        System.out.print("[즐겨찾기] 즐겨찾기할 영단어를 입력하세요: ");
+        String eng = scan.nextLine().trim();
+
+        for(int i = 0;i<voc.size();i++)
+        {
+            if(eng.equals(voc.get(i).getEng()))
+            {
+                if(voc.get(i).isBookMark())  //즐겨찾기에 있는 단어인지 검사
+                {
+                    System.out.println("이미 즐겨찾기에 있습니다");
+                    return;
+                }
+                System.out.println("즐겨찾기 단어 추가가 완료 되었습니다");  //즐겨찾기할 단어가 전체 리스트에 있다면
+                voc.get(i).setBookMark(true);
+                return;
+            }
+        }
+        System.out.println("일치하는 단어가 단어장에 없습니다!");
     }
 
     private void showRandomWord() {
@@ -128,7 +205,7 @@ public class VocabManager extends FileManager {
         if (test_array.isEmpty()) {
             System.out.println("틀린 단어가 없습니다!");
             return;
-        }
+        } //틀린 횟수가 1이상이면 시험볼 배열에 넣기
 
         System.out.println("한글 뜻을 보고 영어를 입력하세요");
         Collections.shuffle(test_array);
@@ -140,7 +217,7 @@ public class VocabManager extends FileManager {
                 test_array.get(i).setWrong_number(test_array.get(i).getWrong_number() - 1);
                 exam_pass_array.add(test_array.get(i));
             }
-        }
+        } //맞추면 wrong_number 1씩 줄여주기, 맞춘 단어를 출력하기 위해 맞추면 array add
         System.out.println("시험이 종료되었습니다 수고하셨습니다");
         if (exam_pass_array.isEmpty())
             System.out.println("맞춘 단어가 없습니다");
@@ -149,7 +226,7 @@ public class VocabManager extends FileManager {
             for (Word word : exam_pass_array) {
                 System.out.println(word);
             }
-        }
+        } //맞춘 단어 출력
     }
 
 
@@ -226,13 +303,13 @@ public class VocabManager extends FileManager {
     private void showAllWrongWords() {
 
         ArrayList<Word> sorted = new ArrayList<>(voc);
-        selectionSort(sorted);
+        selectionSort(sorted); //voc에서 가져온 ArrayList를 selectionSort메소드를 이용해서 정렬하기
 
         System.out.println("\n------ 전체 오답 단어 목록 (내림차순) -------");
 
         boolean any = false;
         for (Word w : sorted) {
-            if (w.getWrong_number() == 0)
+            if (w.getWrong_number() == 0)  //wrong_number이 1보다 커야 오답노트 출력함
                 continue;
             any = true;
             System.out.println(w.getEng() + " : " + w.getWrong_number() + "회");
@@ -336,7 +413,7 @@ public class VocabManager extends FileManager {
         if (voc.isEmpty()) {
             System.out.println("단어장이 비어있어 퀴즈를 진행할 수 없습니다.");
             return;
-        }
+        } //단어장 비어있는 지 검사
 
         ArrayList<Word> quiz_array = voc;
         totalQuizCount++;
@@ -351,11 +428,11 @@ public class VocabManager extends FileManager {
             if (beforeStart_end - beforeStart_start >= beforeStart_time_limit) {
                 break;
             }
-        }
-        int wrong_time = 0;
-        Word quiz_word = quiz_array.get((int) (Math.random() * quiz_array.size()));
-        ArrayList<String> quiz_word_kors = quiz_word.getKors();
-        System.out.println("주어진 한글: " + quiz_word_kors.get((int) (Math.random() * quiz_word_kors.size())));
+        } //nanotime이용해서 준비할 시간 3초
+        int wrong_time = 0;   //3번의 기회
+        Word quiz_word = quiz_array.get((int) (Math.random() * quiz_array.size()));   //quiz_array에서 random index의 Word 객체 가져오기
+        ArrayList<String> quiz_word_kors = quiz_word.getKors();  //뜻 여러개 있을 때를 대비
+        System.out.println("주어진 한글: " + quiz_word_kors.get((int) (Math.random() * quiz_word_kors.size())));   //무작위로 가져온 단어의 한글 뜻 보여주기
         while (wrong_time != 3) {
             System.out.print("사용자의 답: ");
             String user_input = scan.nextLine();
@@ -369,7 +446,7 @@ public class VocabManager extends FileManager {
                 wrong_time++;
                 //continue;
             }
-        }
+        }  //틀리면 wrong_time++시키고 wrong_time!=3일동안에 계속해서 영어를 trim을 이용해서 공백 제거해서 입력받기
 
         if (wrong_time != 0 && wrong_time != 3) {
             quiz_word.setWrong_number(quiz_word.getWrong_number() + 1);
@@ -378,7 +455,7 @@ public class VocabManager extends FileManager {
             System.out.println("정답을 맞추지 못하였습니다");
             quiz_word.setWrong_number(quiz_word.getWrong_number() + 1);
             wrongCount++;
-        }
+        }  // 0이 아니면 틀린횟수++, 틀린횟수가 3이면 정답을 맞추지 못하였다는 문구 띄우기
     }
 
     //퀴즈 메서드
