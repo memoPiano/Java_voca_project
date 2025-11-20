@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+// 메인 메서드. 이 클래스가 실행 클래스
 public class MainMenu {
     public static void main(String[] args) {
         String path="res/words.txt";  //파일 경로
@@ -37,8 +38,8 @@ public class MainMenu {
         FileManager.saveExamples(exPath,vm.getExampleMap() );
 
         // 요약 출력 (디버깅용)
-        System.out.println("=== 로드 결과 ===");
-        System.out.println("총 단어 수: " + vm.getVoc().size());
+//        System.out.println("=== 로드 결과 ===");
+//        System.out.println("총 단어 수: " + vm.getVoc().size());
 
     } //main 의 끝
 
