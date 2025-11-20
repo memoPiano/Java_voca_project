@@ -10,6 +10,8 @@ public class VocabManager extends FileManager {
     ArrayList<Word> voc = new ArrayList<>();  //여기다 주로 저장
     HashMap<String, Word> vocabMap = new HashMap<>();  //이건 검색용이라 저장에는 포함되지 않을 예정.
 
+    HashMap<String, String> exampleMap = new HashMap<>();  // 영단어와 예문 1:1 매핑
+
     private static final Scanner scan = new Scanner(System.in); //사용자로부터 입력받을 스캐너
 
     public VocabManager(String userName) {
@@ -27,22 +29,18 @@ public class VocabManager extends FileManager {
                 vocabMap.put(w.getEng(), w);
             }
         }
-        
-         // 예문 파일(example_sentences.txt)을 불러서 HashMap으로 가져옴
-        HashMap<String, ArrayList<String>> exMap = loadExamples("example_sentences.txt");
+    }
 
-        // 모든 단어 객체(voc 리스트)를 순회하면서
-        for (Word w : voc) {
-
-            // 해당 단어의 영어 단어가 예문 맵에 존재하면
-            if (exMap.containsKey(w.getEng())) {
-
-                // 그 영어 단어에 저장된 모든 예문을 Word 객체에 추가
-                for (String ex : exMap.get(w.getEng())) {
-                    w.addExample(ex);
-                }
-            }
+    // 예문 Map 세팅/조회용 메서드
+    public void setExampleMap(Map<String, String> map) {
+        exampleMap.clear();
+        if (map != null) {
+            exampleMap.putAll(map);
         }
+    }
+
+    public Map<String, String> getExampleMap() {
+        return exampleMap;
     }
 
     public ArrayList<Word> getVoc() {
@@ -52,7 +50,7 @@ public class VocabManager extends FileManager {
     //메뉴
     public void menu() {
         int choice = 0;
-        while (choice != 10) {
+        while (choice != 9) {
             System.out.println("\n------ " + userName + "의 단어장 -------");
             System.out.println("1) 단어 추가");
             System.out.println("2) 단어 수정 (영어/뜻)");
@@ -62,8 +60,7 @@ public class VocabManager extends FileManager {
             System.out.println("6) 오답노트 보기");
             System.out.println("7) 오답노트 재시험");
             System.out.println("8) 오늘의 추천 단어");
-            System.out.println(("9) 예문 추가" ));
-            System.out.println("10) 종료");
+            System.out.println("9) 종료");
             System.out.print("메뉴 선택: ");
 
             try {
@@ -72,8 +69,8 @@ public class VocabManager extends FileManager {
                 System.out.println();
 
                 // 1~9만 허용함
-                if (!((choice >= 1 && choice <= 10))) {
-                    throw new MenuRangeCheckException("메뉴는 1~10만 입력 가능합니다.");
+                if (!((choice >= 1 && choice <= 9))) {
+                    throw new MenuRangeCheckException("메뉴는 1~9만 입력 가능합니다.");
                 }
 
                 switch (choice) {
@@ -84,9 +81,8 @@ public class VocabManager extends FileManager {
                     case 5 -> quiz();
                     case 6 -> show_wrongWord();
                     case 7 -> voc_test();
-                    case 8 -> showRandomWord();
-                    case 9 -> addExampleSentence();
-                    case 10 -> System.out.println("종료합니다");
+                    case 8 -> showRandomWords(5);
+                    case 9 -> System.out.println("종료합니다");
                     default -> System.out.println("메뉴를 다시 선택하세요");
                 }
             } catch (MenuRangeCheckException e) {
@@ -98,21 +94,43 @@ public class VocabManager extends FileManager {
         }
     }
 
-    private void showRandomWord() {
+    //랜덤 단어를 count개 만큼 보여줌
+    private void showRandomWords(int count) {
         if (voc.isEmpty()) {
             System.out.println("단어장이 비어있습니다.");
             return;
         }
 
+        //이미 뽑은 인덱스를 저장해 두는 Set
+        //같은 단어 두 번 추천 안 나오게 하기 위함.
+        Set<Integer> used = new HashSet<>();
         Random rand = new Random();
-        int idx = rand.nextInt(voc.size());
-        Word w = voc.get(idx);
 
-        System.out.println("\n====== 오늘의 랜덤 단어 ======");
-        System.out.println("영어: " + w.getEng());
-        System.out.println("뜻  : " + w.getKors());
-        System.out.println("===============================");
+        System.out.println("\n====== 오늘의 추천 단어 (" + count + "개) ======");
+
+        for (int i = 0; i < count && i < voc.size(); i++) {
+            int idx;
+            do {
+                idx = rand.nextInt(voc.size());
+            } while (!used.add(idx)); //이미 뽑힌 인덱스면 다시 뽑기
+
+            Word w = voc.get(idx);
+
+            // 예문 가져오기
+            String ex = exampleMap.get(w.getEng());
+            if (ex == null || ex.trim().isEmpty()) {
+                ex = "(예문 없음)";
+            }
+
+            // 단어 출력
+            System.out.println("\n----------------------------------");
+            System.out.println("* 영어      : " + w.getEng());
+            System.out.println("* 뜻        : " + String.join("/ ", w.getKors()));
+            System.out.println("* 예문      : " + ex);
+        }
+        System.out.println("----------------------------------");
     }
+
 
 
     //오답 단어만 재시험
@@ -596,6 +614,14 @@ public class VocabManager extends FileManager {
             System.out.println("검색결과) " + result.size() + "개");
             for (Word word : result) {
                 System.out.println(word);
+
+                //예문도 같이 출력 (추가 기능)
+                String ex=exampleMap.get(word.getEng());
+                if( ex != null){
+                    System.out.println("  예문:  "+ex);
+                } else{
+                    System.out.println("  예문: (아직 등록된 예문이 없습니다)");
+                }
             }
         }
     }
@@ -648,6 +674,8 @@ public class VocabManager extends FileManager {
             voc.remove(w);  // 같은 Word 객체 참조라서 이거면 ok
             // 2) 맵에서도 키 제거
             vocabMap.remove(eng);
+            // 3) 예문 맵에서도 제거
+            exampleMap.remove(eng);
 
             System.out.println("'" + eng + "' 단어 삭제 완료!");
         } else {
@@ -656,13 +684,15 @@ public class VocabManager extends FileManager {
     }
 
     //수정 기능
+    // 수정 기능
     private void editVocab() {
         if (voc.isEmpty()) {
             System.out.println("단어장이 비어있습니다.");
             return;
         }
+
         System.out.print("[수정] 영어 단어 입력: ");
-        String eng = scan.nextLine().trim().toLowerCase();
+        String eng = scan.nextLine().trim();  // 정확히 일치하는 단어만 수정
 
         Word w = vocabMap.get(eng);
         if (w == null) {
@@ -670,26 +700,36 @@ public class VocabManager extends FileManager {
             return;
         }
 
-        System.out.println("현재 단어: " + w.getEng());
-        System.out.println("현재 뜻: " + w.getKors());
+        // 현재 상태 출력
+        System.out.println("\n[수정] 영어: " + w.getEng());
 
+        System.out.print("현재 뜻: ");
+        for (int i = 0; i < w.getKors().size(); i++) {
+            System.out.print("[" + (i + 1) + "] " + w.getKors().get(i) + " ");
+        }
+        System.out.println();
+
+        String curEx = exampleMap.get(w.getEng());
+        System.out.println("현재 예문: " + (curEx != null ? curEx : "(등록된 예문 없음)"));
+
+        // 수정 메뉴
         System.out.println("\n[수정 메뉴]");
         System.out.println("1) 영어 단어 수정");
         System.out.println("2) 한글 뜻 추가");
         System.out.println("3) 한글 뜻 삭제");
-        System.out.println("4) 한글 뜻 전체 수정");
-        System.out.print("선택: ");
+        System.out.println("4) 예문 수정");
+        System.out.println("0) 취소");
 
         int choice = -1;
-
         while (true) {
             System.out.print("선택: ");
+            String line = scan.nextLine().trim();
             try {
-                choice = Integer.parseInt(scan.nextLine());
-                if (choice >= 1 && choice <= 4) {
+                choice = Integer.parseInt(line);
+                if (choice >= 0 && choice <= 4) {
                     break;
                 } else {
-                    System.out.println("1~4 사이의 메뉴를 선택해주세요.");
+                    System.out.println("0~4 사이의 메뉴를 선택해주세요.");
                 }
             } catch (NumberFormatException e) {
                 System.out.println("숫자를 입력해주세요.");
@@ -697,68 +737,143 @@ public class VocabManager extends FileManager {
         }
 
         switch (choice) {
+            case 0 -> {
+                System.out.println("수정을 취소합니다.");
+                return;
+            }
 
-            //영어 단어 자체를 수정
+            // 1) 영어 단어 수정 (중복 방지 + 예문 key도 함께 변경)
             case 1 -> {
                 System.out.print("새 영어 단어 입력: ");
-                String newEng = scan.nextLine().trim().toLowerCase();
+                String newEng = scan.nextLine().trim();
                 if (newEng.isEmpty()) {
+                    System.out.println("입력이 비어 있습니다. 수정 취소.");
+                    return;
+                }
+
+                // 이미 존재하는 단어와 충돌하면 안 됨
+                if (!newEng.equals(eng) && vocabMap.containsKey(newEng)) {
+                    System.out.println("이미 존재하는 영어 단어입니다. 다른 단어를 입력해주세요.");
+                    return;
+                }
+
+                vocabMap.remove(eng);   // 예전 key 제거
+                w.setEng(newEng);       // Word 객체 내부 eng 변경
+                vocabMap.put(newEng, w);
+
+                // 예문 key도 함께 변경
+                updateExampleKey(eng, newEng);
+
+                System.out.println("영어 단어 수정 완료!");
+            }
+
+            // 2) 한글 뜻 추가 (중복 방지)
+            case 2 -> {
+                System.out.print("추가할 뜻 입력 (/로 여러 개 가능): ");
+                String line = scan.nextLine().trim();
+                if (line.isEmpty()) {
                     System.out.println("입력이 비어 있습니다.");
                     return;
                 }
 
-                // map 업데이트
-                vocabMap.remove(eng);
-                w.setEng(newEng);
-                vocabMap.put(newEng, w);
-                System.out.println("영어 단어 수정 완료!");
-            }
-
-            //한글 뜻 추가
-            case 2 -> {
-                System.out.print("추가할 뜻 입력 (/로 여러 개 가능): ");
-                String line = scan.nextLine().trim();
                 String[] addList = line.split("/");
+                int added = 0;
 
                 for (String k : addList) {
                     k = k.trim();
-                    if (!w.getKors().contains(k))
+                    if (!k.isEmpty() && !w.getKors().contains(k)) {
                         w.getKors().add(k);
+                        added++;
+                    }
                 }
-                System.out.println("뜻 추가 완료!");
-            }
 
-            //한글 뜻 삭제
-            case 3 -> {
-                System.out.print("삭제할 뜻 입력: ");
-                String delKor = scan.nextLine().trim();
-
-                if (w.getKors().remove(delKor)) {
-                    System.out.println("뜻 삭제 완료!");
+                if (added == 0) {
+                    System.out.println("모든 뜻이 이미 존재합니다. 추가된 뜻이 없습니다.");
                 } else {
-                    System.out.println("해당 뜻이 없습니다.");
+                    System.out.println("뜻 " + added + "개가 추가되었습니다.");
+                    System.out.println("현재 뜻: " + w.getKors());
                 }
             }
 
-            //뜻 전체 새로 작성
-            case 4 -> {
-                System.out.print("새로운 뜻 입력 (/로 여러 개 가능): ");
-                String line = scan.nextLine().trim();
-                String[] newList = line.split("/");
-
-                ArrayList<String> newKors = new ArrayList<>();
-                for (String k : newList) {
-                    k = k.trim();
-                    if (!k.isEmpty())
-                        newKors.add(k);
+            // 3) 한글 뜻 삭제 (번호 선택)
+            case 3 -> {
+                if (w.getKors().isEmpty()) {
+                    System.out.println("삭제할 뜻이 없습니다.");
+                    return;
                 }
-                w.setKors(newKors);
-                System.out.println("뜻 전체 수정 완료!");
+
+                System.out.println("삭제할 뜻 번호를 선택하세요 (0 = 취소):");
+                for (int i = 0; i < w.getKors().size(); i++) {
+                    System.out.println((i + 1) + ") " + w.getKors().get(i));
+                }
+
+                int idx = -1;
+                while (true) {
+                    System.out.print("번호 입력: ");
+                    String s = scan.nextLine().trim();
+                    try {
+                        idx = Integer.parseInt(s);
+                        if (idx == 0) {
+                            System.out.println("삭제를 취소합니다.");
+                            return;
+                        }
+                        if (1 <= idx && idx <= w.getKors().size()) {
+                            break;
+                        } else {
+                            System.out.println("1~" + w.getKors().size() + " 사이의 번호 또는 0을 입력해주세요.");
+                        }
+                    } catch (NumberFormatException e) {
+                        System.out.println("숫자를 입력해주세요.");
+                    }
+                }
+
+                String removed = w.getKors().remove(idx - 1);
+                System.out.println("뜻 '" + removed + "' 삭제 완료!");
+
+                if (w.getKors().isEmpty()) {
+                    System.out.println("남은 뜻이 없습니다. 필요하면 뜻을 다시 추가해주세요.");
+                } else {
+                    System.out.println("현재 뜻: " + w.getKors());
+                }
+            }
+
+            // 4) 예문 수정
+            case 4 -> {
+                String cur = exampleMap.get(w.getEng());
+                if (cur != null) {
+                    System.out.println("현재 예문: " + cur);
+                } else {
+                    System.out.println("현재 예문: (등록된 예문 없음)");
+                }
+
+                System.out.print("새 예문을 입력하세요 (그냥 엔터면 예문 삭제): ");
+                String newEx = scan.nextLine().trim();
+
+                if (newEx.isEmpty()) {
+                    exampleMap.remove(w.getEng());
+                    System.out.println("예문이 삭제되었습니다.");
+                } else {
+                    exampleMap.put(w.getEng(), newEx);
+                    System.out.println("예문이 저장되었습니다.");
+                }
             }
 
             default -> System.out.println("잘못된 선택입니다.");
         }
     }
+
+    //영어를 바꾸면 예문의 key도 같이 옮겨줘야 함.
+    private void updateExampleKey(String oldEng, String newEng) {
+        if (oldEng.equals(newEng))
+            return;  //같으면 안바꾸고 종료
+
+        String ex = exampleMap.remove(oldEng);
+        if (ex != null) {
+            exampleMap.put(newEng, ex);
+        }
+    }
+
+
 
 
     //추가 기능
@@ -829,32 +944,20 @@ public class VocabManager extends FileManager {
             voc.add(newWord);            // 리스트에 추가
             vocabMap.put(eng, newWord);  // 맵에도 추가
 
+            // 예문 입력 추가
+            System.out.print("예문을 입력하시겠습니까? (없으면 그냥 엔터) : ");
+            String ex = scan.nextLine().trim();
+            if (!ex.isEmpty()) {
+                exampleMap.put(eng, ex);
+                System.out.println("예문이 등록되었습니다.");
+            } else {
+                System.out.println("예문 없이 단어만 등록되었습니다.");
+            }
+            System.out.println("=".repeat(20));
             System.out.println("'" + eng + "' 단어가 새로 추가되었습니다.");
             System.out.println("뜻: " + newWord.getKors());
+            System.out.println("예문: "+exampleMap.get(newWord.getEng()));
         }
     }
-
-    //예문추가메소드
-    private void addExampleSentence() {
-        System.out.print("예문을 추가할 영어 단어 입력: ");
-        String eng = scan.nextLine().trim();
-
-        Word w = vocabMap.get(eng);
-        if (w == null) {
-            System.out.println("해당 단어가 존재하지 않습니다.");
-            return;
-        }
-
-
-        System.out.print("추가할 예문 입력: ");
-        String example = scan.nextLine().trim();
-
-        w.addExample(example);
-
-        appendExample("example_sentences.txt", eng, example);
-
-        System.out.println("예문이 성공적으로 추가되었습니다!");
-    }
-
 
 }

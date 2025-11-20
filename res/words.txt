@@ -1,6 +1,5 @@
 at first	처음에는	1
 castle	성	0
-consider	고려하다/ 간주하다	0
 considerable	상당한	1
 enlighten	계몽시키다/ 개화시키다	1
 explain	설명하다	0
@@ -57,3 +56,4 @@ these days	최근에	0
 train	기차/ 훈련시키다	0
 trainer	훈련자	0
 universal	우주의/ 일반적인	0
+consider	고려하다	0

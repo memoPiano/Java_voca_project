@@ -1,0 +1,59 @@
+explain	Could you explain this grammar rule one more time?
+symbol	The dove is a symbol of peace.
+considering that	Considering that it’s raining, we should stay inside.
+education	A good education can change a person’s future.
+castle	The old castle on the hill looks beautiful at night.
+inheritance	He spent his inheritance on starting a small business.
+nowadays	Nowadays many people work from home.
+rib	I hurt my rib while playing basketball yesterday.
+explanation	His explanation helped me finally solve the problem.
+at first	At first, I didn’t understand the question, but now it’s clear.
+reinforce	We need to reinforce the bridge before the rainy season.
+suppression	The suppression of free speech is a serious problem.
+legal	You should get legal advice before signing the contract.
+of late	Of late, I’ve been feeling very tired.
+state	Please state your name and address clearly.
+consider	We must consider every option before making a decision.
+female	The female singer on stage has a powerful voice.
+press	Please press the red button to start the machine.
+enlighten	This book will enlighten you on how society works.
+in the place of	He spoke in the place of his manager at the meeting.
+train	I usually take the train to work in the morning.
+symbolic	Lighting a candle is often a symbolic act of hope.
+law	No one is above the law in a fair society.
+educational	This program is both fun and educational for children.
+last	This is the last chance you have to submit your homework.
+invent	He hopes to invent a device that saves energy.
+instead of	Let’s walk instead of taking the bus.
+illegal	It is illegal to drive without a valid license.
+intelligence	His high intelligence helps him solve complex problems.
+consideration	After long consideration, she decided to study abroad.
+endowment	The museum received a large endowment from a local company.
+region	This region is famous for its beautiful mountains.
+male	There are more male students in this class than female students.
+endow	The university plans to endow a new scholarship.
+religious	She grew up in a very religious family.
+lawful	All citizens have a right to lawful protection.
+sociable	He is very sociable and makes friends easily.
+regional	The government is planning a new regional development project.
+in the first place	I never wanted to go there in the first place.
+universally	This idea is almost universally accepted by scientists.
+training	He is in training to become a professional athlete.
+oppress	A cruel leader can easily oppress the weak.
+society	In modern society, technology changes very quickly.
+considerable	The project required a considerable amount of time and effort.
+trainer	My personal trainer helps me exercise correctly.
+statement	His statement about the accident was clear and honest.
+socialize	I don’t like to socialize much at large parties.
+frankly speaking	Frankly speaking, I don’t think this plan will work.
+universal	The desire for happiness is almost universal among people.
+social	Social issues like poverty and education are important topics.
+recently	I recently moved to a new city.
+lately	I haven’t had much free time lately.
+suppress	You shouldn’t suppress your feelings all the time.
+intelligent	She is very intelligent and learns new things quickly.
+religion	Everyone has the right to choose their own religion.
+oppression	The people protested against political oppression.
+inherit	She will inherit her grandmother’s house.
+these days	I don’t watch TV very often these days.
+invention	His invention completely changed the way people live.
