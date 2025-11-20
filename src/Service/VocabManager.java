@@ -27,6 +27,22 @@ public class VocabManager extends FileManager {
                 vocabMap.put(w.getEng(), w);
             }
         }
+        
+         // 예문 파일(example_sentences.txt)을 불러서 HashMap으로 가져옴
+        HashMap<String, ArrayList<String>> exMap = loadExamples("example_sentences.txt");
+
+        // 모든 단어 객체(voc 리스트)를 순회하면서
+        for (Word w : voc) {
+
+            // 해당 단어의 영어 단어가 예문 맵에 존재하면
+            if (exMap.containsKey(w.getEng())) {
+
+                // 그 영어 단어에 저장된 모든 예문을 Word 객체에 추가
+                for (String ex : exMap.get(w.getEng())) {
+                    w.addExample(ex);
+                }
+            }
+        }
     }
 
     public ArrayList<Word> getVoc() {
@@ -36,7 +52,7 @@ public class VocabManager extends FileManager {
     //메뉴
     public void menu() {
         int choice = 0;
-        while (choice != 9) {
+        while (choice != 10) {
             System.out.println("\n------ " + userName + "의 단어장 -------");
             System.out.println("1) 단어 추가");
             System.out.println("2) 단어 수정 (영어/뜻)");
@@ -46,7 +62,8 @@ public class VocabManager extends FileManager {
             System.out.println("6) 오답노트 보기");
             System.out.println("7) 오답노트 재시험");
             System.out.println("8) 오늘의 추천 단어");
-            System.out.println("9) 종료");
+            System.out.println(("9) 예문 추가" ));
+            System.out.println("10) 종료");
             System.out.print("메뉴 선택: ");
 
             try {
@@ -55,8 +72,8 @@ public class VocabManager extends FileManager {
                 System.out.println();
 
                 // 1~9만 허용함
-                if (!((choice >= 1 && choice <= 9))) {
-                    throw new MenuRangeCheckException("메뉴는 1~9만 입력 가능합니다.");
+                if (!((choice >= 1 && choice <= 10))) {
+                    throw new MenuRangeCheckException("메뉴는 1~10만 입력 가능합니다.");
                 }
 
                 switch (choice) {
@@ -68,7 +85,8 @@ public class VocabManager extends FileManager {
                     case 6 -> show_wrongWord();
                     case 7 -> voc_test();
                     case 8 -> showRandomWord();
-                    case 9 -> System.out.println("종료합니다");
+                    case 9 -> addExampleSentence();
+                    case 10 -> System.out.println("종료합니다");
                     default -> System.out.println("메뉴를 다시 선택하세요");
                 }
             } catch (MenuRangeCheckException e) {
@@ -815,5 +833,28 @@ public class VocabManager extends FileManager {
             System.out.println("뜻: " + newWord.getKors());
         }
     }
+
+    //예문추가메소드
+    private void addExampleSentence() {
+        System.out.print("예문을 추가할 영어 단어 입력: ");
+        String eng = scan.nextLine().trim();
+
+        Word w = vocabMap.get(eng);
+        if (w == null) {
+            System.out.println("해당 단어가 존재하지 않습니다.");
+            return;
+        }
+
+
+        System.out.print("추가할 예문 입력: ");
+        String example = scan.nextLine().trim();
+
+        w.addExample(example);
+
+        appendExample("example_sentences.txt", eng, example);
+
+        System.out.println("예문이 성공적으로 추가되었습니다!");
+    }
+
 
 }
