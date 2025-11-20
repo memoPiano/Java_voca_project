@@ -3,9 +3,10 @@ package Vocab;
 import java.util.ArrayList;
 
 public class Word {
-    String eng;
-    ArrayList<String> kors;
-    int wrong_number;
+    String eng;  //영어 뜻
+    ArrayList<String> kors;  //한국어 뜻
+    int wrong_number;  //틀린 횟수
+    boolean bookMark;  //즐겨찾기 여부
 
     public Word(String eng) {
         this.eng = eng;
@@ -30,6 +31,8 @@ public class Word {
     public void increaseWrong() {
         wrong_number++;
     }
+    public boolean isBookMark() {return bookMark;}
+    public void setBookMark(boolean bookMark) {this.bookMark = bookMark;}
 
     // 예문을 저장하는 리스트
 // 한 단어에 여러 개의 예문을 추가할 수 있기 때문에 ArrayList 사용

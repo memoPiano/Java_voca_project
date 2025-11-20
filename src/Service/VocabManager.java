@@ -146,7 +146,7 @@ public class VocabManager extends FileManager {
         if (test_array.isEmpty()) {
             System.out.println("틀린 단어가 없습니다!");
             return;
-        }
+        } //틀린 횟수가 1이상이면 시험볼 배열에 넣기
 
         System.out.println("한글 뜻을 보고 영어를 입력하세요");
         Collections.shuffle(test_array);
@@ -158,7 +158,7 @@ public class VocabManager extends FileManager {
                 test_array.get(i).setWrong_number(test_array.get(i).getWrong_number() - 1);
                 exam_pass_array.add(test_array.get(i));
             }
-        }
+        } //맞추면 wrong_number 1씩 줄여주기, 맞춘 단어를 출력하기 위해 맞추면 array add
         System.out.println("시험이 종료되었습니다 수고하셨습니다");
         if (exam_pass_array.isEmpty())
             System.out.println("맞춘 단어가 없습니다");
@@ -167,7 +167,7 @@ public class VocabManager extends FileManager {
             for (Word word : exam_pass_array) {
                 System.out.println(word);
             }
-        }
+        } //맞춘 단어 출력
     }
 
 
@@ -244,13 +244,13 @@ public class VocabManager extends FileManager {
     private void showAllWrongWords() {
 
         ArrayList<Word> sorted = new ArrayList<>(voc);
-        selectionSort(sorted);
+        selectionSort(sorted); //voc에서 가져온 ArrayList를 selectionSort메소드를 이용해서 정렬하기
 
         System.out.println("\n------ 전체 오답 단어 목록 (내림차순) -------");
 
         boolean any = false;
         for (Word w : sorted) {
-            if (w.getWrong_number() == 0)
+            if (w.getWrong_number() == 0)  //wrong_number이 1보다 커야 오답노트 출력함
                 continue;
             any = true;
             System.out.println(w.getEng() + " : " + w.getWrong_number() + "회");
@@ -354,7 +354,7 @@ public class VocabManager extends FileManager {
         if (voc.isEmpty()) {
             System.out.println("단어장이 비어있어 퀴즈를 진행할 수 없습니다.");
             return;
-        }
+        } //단어장 비어있는 지 검사
 
         ArrayList<Word> quiz_array = voc;
         totalQuizCount++;
@@ -369,11 +369,11 @@ public class VocabManager extends FileManager {
             if (beforeStart_end - beforeStart_start >= beforeStart_time_limit) {
                 break;
             }
-        }
-        int wrong_time = 0;
-        Word quiz_word = quiz_array.get((int) (Math.random() * quiz_array.size()));
-        ArrayList<String> quiz_word_kors = quiz_word.getKors();
-        System.out.println("주어진 한글: " + quiz_word_kors.get((int) (Math.random() * quiz_word_kors.size())));
+        } //nanotime이용해서 준비할 시간 3초
+        int wrong_time = 0;   //3번의 기회
+        Word quiz_word = quiz_array.get((int) (Math.random() * quiz_array.size()));   //quiz_array에서 random index의 Word 객체 가져오기
+        ArrayList<String> quiz_word_kors = quiz_word.getKors();  //뜻 여러개 있을 때를 대비
+        System.out.println("주어진 한글: " + quiz_word_kors.get((int) (Math.random() * quiz_word_kors.size())));   //무작위로 가져온 단어의 한글 뜻 보여주기
         while (wrong_time != 3) {
             System.out.print("사용자의 답: ");
             String user_input = scan.nextLine();
@@ -387,7 +387,7 @@ public class VocabManager extends FileManager {
                 wrong_time++;
                 //continue;
             }
-        }
+        }  //틀리면 wrong_time++시키고 wrong_time!=3일동안에 계속해서 영어를 trim을 이용해서 공백 제거해서 입력받기
 
         if (wrong_time != 0 && wrong_time != 3) {
             quiz_word.setWrong_number(quiz_word.getWrong_number() + 1);
@@ -396,7 +396,7 @@ public class VocabManager extends FileManager {
             System.out.println("정답을 맞추지 못하였습니다");
             quiz_word.setWrong_number(quiz_word.getWrong_number() + 1);
             wrongCount++;
-        }
+        }  // 0이 아니면 틀린횟수++, 틀린횟수가 3이면 정답을 맞추지 못하였다는 문구 띄우기
     }
 
     //퀴즈 메서드
