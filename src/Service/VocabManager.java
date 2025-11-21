@@ -546,6 +546,12 @@ public class VocabManager extends FileManager {
         ArrayList<Word> pool = new ArrayList<>(voc);
         Random rand = new Random();
 
+        int[] rand_array = new int[5];
+        for(int i = 0;i<5;i++)
+        {
+            rand_array[i] = (int) (Math.random()*voc.size());
+        }
+
         // 최대 5문제까지 출제, 만약 5개 보다 적으면 일찍 끝냄
         int numQuestions = Math.min(5, pool.size());
 
@@ -553,7 +559,7 @@ public class VocabManager extends FileManager {
         int localWrong = 0;   // 이번 하드 모드에서 틀린 개수
 
         for (int q = 0; q < numQuestions; q++) {
-            Word answer = pool.get(q); // 이번 문제의 정답 단어
+            Word answer = pool.get(rand_array[q]); // 이번 문제의 정답 단어
 
             // 2-1) 한글 뜻 문자열로 만들기 ("뜻1 / 뜻2 / 뜻3")
             StringBuilder korSb = new StringBuilder();
