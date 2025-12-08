@@ -562,26 +562,63 @@ public class VocabFrame extends JFrame {
         JTable table = new JTable(bookmarkModel);
         panel.add(new JScrollPane(table), BorderLayout.CENTER);
 
-        // 하단 버튼 (즐겨찾기 해제 기능)
-        JButton btnDelete = new JButton("선택한 단어 즐겨찾기 해제");
-        panel.add(btnDelete, BorderLayout.SOUTH);
+        // 하단 버튼 영역 (추가 & 해제)
+        JPanel btnPanel = new JPanel(); // 버튼 2개를 담을 패널
+        JButton btnAdd = new JButton("단어 직접 추가");
+        JButton btnDelete = new JButton("선택한 단어 해제");
 
+        btnPanel.add(btnAdd);
+        btnPanel.add(btnDelete);
+        panel.add(btnPanel, BorderLayout.SOUTH);
+
+        // 1) [추가] 버튼 동작
+        btnAdd.addActionListener(e -> {
+            // 입력 팝업 띄우기
+            String input = JOptionPane.showInputDialog(panel, "즐겨찾기에 추가할 영단어를 입력하세요:");
+
+            // 취소했거나 빈칸이면 종료
+            if (input == null || input.trim().isEmpty()) return;
+
+            String target = input.trim();
+            boolean found = false;
+
+            // 단어장에서 찾아서 즐겨찾기 설정
+            for (Word w : manager.getVoc()) {
+                if (w.getEng().equals(target)) {
+                    if (w.isBookMark()) {
+                        JOptionPane.showMessageDialog(panel, "이미 즐겨찾기에 등록된 단어입니다.");
+                        return;
+                    }
+                    w.setBookMark(true); //즐겨찾기 true로 변경
+                    found = true;
+                    break;
+                }
+            }
+
+            if (found) {
+                refreshBookmarkTable(); // 테이블 새로고침
+                JOptionPane.showMessageDialog(panel, "'" + target + "' 단어가 즐겨찾기에 추가되었습니다!");
+            } else {
+                JOptionPane.showMessageDialog(panel, "단어장에 존재하지 않는 단어입니다.\n먼저 '단어 관리'에서 단어를 추가해주세요.");
+            }
+        });
+
+        // 2) [해제] 버튼 동작
         btnDelete.addActionListener(e -> {
             int row = table.getSelectedRow();
             if (row == -1) {
-                JOptionPane.showMessageDialog(panel, "해제할 단어를 선택해주세요.");
+                JOptionPane.showMessageDialog(panel, "해제할 단어를 표에서 선택해주세요.");
                 return;
             }
             String eng = (String) bookmarkModel.getValueAt(row, 0);
 
-            // 매니저를 통해 즐겨찾기 해제 처리
-            for(Word w : manager.getVoc()) {
-                if(w.getEng().equals(eng)) {
-                    w.setBookMark(false);
+            for (Word w : manager.getVoc()) {
+                if (w.getEng().equals(eng)) {
+                    w.setBookMark(false); // 즐겨찾기 false로 해제
                     break;
                 }
             }
-            refreshBookmarkTable(); // 테이블 갱신
+            refreshBookmarkTable();
             JOptionPane.showMessageDialog(panel, "즐겨찾기가 해제되었습니다.");
         });
 
