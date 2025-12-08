@@ -70,6 +70,8 @@ public class VocabFrame extends JFrame {
         mainCard = new CardLayout();
         mainCardPanel = new JPanel(mainCard);
 
+        mainCardPanel.add(createHomePanel(), "HOME");
+
         mainCardPanel.add(createWordManagePanel(), "WORD");  // (기능 1,2,3,4)
         //mainCardPanel.add(createQuizPanel(), "QUIZ");   //TODO : 퀴즈패널  (기능 5)
         mainCardPanel.add(createUtilPanel(), "UTIL");   //TODO : 유틸 패널 (기능 6,7,8,9)
@@ -147,6 +149,7 @@ public class VocabFrame extends JFrame {
         rowEx.add(lblEx, BorderLayout.WEST);
         rowEx.add(tfEx, BorderLayout.CENTER);
 
+
         // 행들을 세로로 쌓기
         formWrapper.add(rowEng);
         formWrapper.add(Box.createVerticalStrut(10)); // 행 사이 간격
@@ -163,6 +166,16 @@ public class VocabFrame extends JFrame {
         btnPanel.setBorder(BorderFactory.createEmptyBorder(10, 0, 10, 0));
         btnPanel.add(btnAdd);
         panel.add(btnPanel, BorderLayout.SOUTH);
+
+        // 1) 영단어 입력 후 엔터 치면 뜻 입력칸으로 이동
+        tfEng.addActionListener(e -> tfKor.requestFocusInWindow());
+
+        // 2) 뜻 입력 후 엔터 치면 예문 칸으로 이동
+        tfKor.addActionListener(e -> tfEx.requestFocusInWindow());
+
+        // 3) 예문 칸에서 엔터 치면 "추가" 버튼 누른 것과 동일하게 실행
+        tfEx.addActionListener(e -> btnAdd.doClick());
+
 
         // ----- 버튼 동작 -----
         btnAdd.addActionListener(e -> {
@@ -971,6 +984,50 @@ public class VocabFrame extends JFrame {
         panel.add(msg, BorderLayout.CENTER);
         return panel;
     }
+
+    //************* 시작 화면 *********
+    // 시작 화면 패널
+    private JPanel createHomePanel() {
+        JPanel panel = new JPanel(new BorderLayout());
+        panel.setBorder(BorderFactory.createEmptyBorder(40, 40, 40, 40));
+
+        // 상단 타이틀
+        JLabel title = new JLabel("단어장 프로그램", SwingConstants.CENTER);
+        title.setFont(title.getFont().deriveFont(Font.BOLD, 32f));
+
+        JLabel subtitle = new JLabel("위의 메뉴 또는 아래 버튼을 눌러 시작하세요.",
+                SwingConstants.CENTER);
+        subtitle.setFont(subtitle.getFont().deriveFont(16f));
+
+        JPanel titlePanel = new JPanel(new BorderLayout());
+        titlePanel.add(title, BorderLayout.NORTH);
+        titlePanel.add(subtitle, BorderLayout.SOUTH);
+
+        // 가운데 큰 버튼들
+        JButton btnGoWord = new JButton("단어 관리 시작하기");
+        JButton btnGoQuiz = new JButton("퀴즈 풀기");
+        JButton btnGoUtil = new JButton("유용한 기능");
+
+        btnGoWord.setFont(btnGoWord.getFont().deriveFont(18f));
+        btnGoQuiz.setFont(btnGoQuiz.getFont().deriveFont(18f));
+        btnGoUtil.setFont(btnGoUtil.getFont().deriveFont(18f));
+
+        // 누르면 해당 카드로 전환
+        btnGoWord.addActionListener(e -> mainCard.show(mainCardPanel, "WORD"));
+        btnGoQuiz.addActionListener(e -> mainCard.show(mainCardPanel, "QUIZ"));
+        btnGoUtil.addActionListener(e -> mainCard.show(mainCardPanel, "UTIL"));
+
+        JPanel centerButtons = new JPanel(new GridLayout(3, 1, 15, 15));
+        centerButtons.add(btnGoWord);
+        centerButtons.add(btnGoQuiz);
+        centerButtons.add(btnGoUtil);
+
+        panel.add(titlePanel, BorderLayout.NORTH);
+        panel.add(centerButtons, BorderLayout.CENTER);
+
+        return panel;
+    }
+
 
 }
 
