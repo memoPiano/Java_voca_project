@@ -6,8 +6,12 @@ import Vocab.Word;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Random;
 
 public class VocabFrame extends JFrame {
 
@@ -44,6 +48,9 @@ public class VocabFrame extends JFrame {
         setVisible(true);
     }
 
+    public VocabFrame(VocabManager vm) {
+    }
+
     //북쪽에 달릴 메뉴
     private void initTopMenu() {
         JPanel northPanel = new JPanel();
@@ -70,11 +77,269 @@ public class VocabFrame extends JFrame {
         mainCardPanel = new JPanel(mainCard);
 
         mainCardPanel.add(createWordManagePanel(), "WORD");  // (기능 1,2,3,4)
-        //mainCardPanel.add(createQuizPanel(), "QUIZ");   //TODO : 퀴즈패널  (기능 5)
+        mainCardPanel.add(createQuizPanel(), "QUIZ");   //TODO : 퀴즈패널  (기능 5)
         mainCardPanel.add(createUtilPanel(), "UTIL");   //TODO : 유틸 패널 (기능 6,7,8,9)
 
         frame.add(mainCardPanel, BorderLayout.CENTER);
     }
+
+    private JPanel createQuizPanel() {
+        JPanel mainPanel =new JPanel(new BorderLayout());
+        JPanel btnPanel = new JPanel(new GridLayout(2,1,10,10));
+        CardLayout card = new CardLayout();
+        JPanel showPanel = new JPanel(card);
+        mainPanel.add(btnPanel, BorderLayout.WEST);
+        mainPanel.add(showPanel,BorderLayout.CENTER);
+
+        JButton essayBtn = new JButton("주관식 퀴즈");
+        JButton choiceBtn = new JButton("객관식 퀴즈");
+
+        btnPanel.add(essayBtn);
+        btnPanel.add(choiceBtn);
+        JPanel homePanel = new JPanel(new BorderLayout());
+        homePanel.add(new JLabel("왼쪽에서 퀴즈 유형을 선택하세요.", JLabel.CENTER), BorderLayout.CENTER);
+
+        showPanel.add(homePanel, "home");
+        showPanel.add(addChoiceCard(), "choice");
+        showPanel.add(addEssayCard(), "essay");
+
+        card.show(showPanel, "home");
+
+        choiceBtn.addActionListener(e -> card.show(showPanel,"choice"));
+        essayBtn.addActionListener(e -> card.show(showPanel, "essay"));
+
+        return mainPanel;
+    }
+
+    private JPanel addChoiceCard() {
+        JPanel panel = new JPanel(new BorderLayout(10, 10));
+        List<Word> voc = manager.getVoc();
+
+        if (voc.size() < 4) {
+            panel.add(new JLabel("단어가 4개 이상 있어야 객관식 퀴즈를 진행할 수 있습니다.", JLabel.CENTER),
+                    BorderLayout.CENTER);
+            return panel;
+        }
+
+        int numQuestions = Math.min(5, voc.size());
+        JPanel content = new JPanel();
+        content.setLayout(new GridLayout(numQuestions, 1, 0, 10));
+        JScrollPane scroll = new JScrollPane(content);
+        panel.add(scroll, BorderLayout.CENTER);
+
+        ButtonGroup[] groups = new ButtonGroup[numQuestions];
+        JRadioButton[][] choiceButtons = new JRadioButton[numQuestions][4];
+        Word[] answers = new Word[numQuestions];
+        Random rand = new Random();
+
+        class QuizBuilder {
+            void reset() {
+                content.removeAll();
+
+                for (int q = 0; q < numQuestions; q++) {
+                    Word answer = voc.get(rand.nextInt(voc.size()));
+                    answers[q] = answer;
+
+                    List<String> kors = answer.getKors();
+                    String korText = "";
+                    for (int i = 0; i < kors.size(); i++) {
+                        if (i > 0) {
+                            korText += " / ";
+                        }
+                        korText += kors.get(i);
+                    }
+
+                    JPanel questionPanel = new JPanel(new BorderLayout(5, 5));
+
+                    JLabel qLabel = new JLabel("Q" + (q + 1) + ". " + korText);
+                    JPanel labelPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+                    labelPanel.add(qLabel);
+                    questionPanel.add(labelPanel, BorderLayout.NORTH);
+
+                    ButtonGroup group = new ButtonGroup();
+                    groups[q] = group;
+
+                    List<Word> options = new ArrayList<>();
+                    options.add(answer);
+
+                    while (options.size() < 4) {
+                        Word candidate = voc.get(rand.nextInt(voc.size()));
+                        if (!options.contains(candidate)) {
+                            options.add(candidate);
+                        }
+                    }
+
+                    Collections.shuffle(options, rand);
+
+                    JPanel choicesPanel = new JPanel(new GridLayout(2, 2, 5, 5));
+                    for (int i = 0; i < 4; i++) {
+                        Word optionWord = options.get(i);
+                        JRadioButton rb = new JRadioButton(optionWord.getEng());
+                        choiceButtons[q][i] = rb;
+                        group.add(rb);
+                        choicesPanel.add(rb);
+                    }
+
+                    questionPanel.add(choicesPanel, BorderLayout.CENTER);
+                    content.add(questionPanel);
+                }
+
+                content.revalidate();
+                content.repaint();
+            }
+        }
+
+        QuizBuilder builder = new QuizBuilder();
+        builder.reset();
+
+        JButton submitBtn = new JButton("채점하기");
+        panel.add(submitBtn, BorderLayout.SOUTH);
+
+        submitBtn.addActionListener(e -> {
+            int correct = 0;
+            int wrong = 0;
+            List<Word> wrongWords = new ArrayList<>();
+
+            for (int i = 0; i < groups.length; i++) {
+                ButtonGroup g = groups[i];
+                if (g == null) {
+                    continue;
+                }
+                Word answer = answers[i];
+                if (answer == null) {
+                    continue;
+                }
+
+                int selectedIndex = -1;
+                for (int j = 0; j < 4; j++) {
+                    JRadioButton rb = choiceButtons[i][j];
+                    if (rb != null && rb.isSelected()) {
+                        selectedIndex = j;
+                        break;
+                    }
+                }
+
+                int correctIndex = -1;
+                for (int j = 0; j < 4; j++) {
+                    JRadioButton rb = choiceButtons[i][j];
+                    if (rb != null && rb.getText().equals(answer.getEng())) {
+                        correctIndex = j;
+                        break;
+                    }
+                }
+
+                if (selectedIndex != -1 && selectedIndex == correctIndex) {
+                    correct++;
+                } else {
+                    wrong++;
+                    answer.setWrong_number(answer.getWrong_number() + 1);
+                    if (!wrongWords.contains(answer)) {
+                        wrongWords.add(answer);
+                    }
+                }
+            }
+
+            String msg = "총 " + (correct + wrong) + "문제 중 " + correct + "개 정답, " + wrong + "개 오답\n";
+            if (!wrongWords.isEmpty()) {
+                msg += "\n틀린 단어 목록:\n";
+                for (Word w : wrongWords) {
+                    msg += "- " + w.getEng() + " (현재 오답 횟수: " + w.getWrong_number() + "회)\n";
+                }
+            }
+            JOptionPane.showMessageDialog(panel, msg);
+
+            builder.reset();
+        });
+
+        panel.addComponentListener(new ComponentAdapter() {
+            @Override
+            public void componentShown(ComponentEvent e) {
+                builder.reset();
+            }
+        });
+
+        return panel;
+    }
+
+
+
+    private JPanel addEssayCard() {
+        JPanel essayPanel = new JPanel(new BorderLayout(10,10));
+        JLabel title = new JLabel("한글 뜻을 보고 영어 단어를 입력하세요", JLabel.CENTER);
+        essayPanel.add(title, BorderLayout.NORTH);
+
+        JPanel center = new JPanel(new GridLayout(2,1,5,5));
+        JLabel korLabel = new JLabel("한글 뜻: ", JLabel.CENTER);
+        JPanel korPanel =new JPanel(new FlowLayout(FlowLayout.CENTER));
+        korPanel.add(korLabel);
+
+        JPanel userInputPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
+        JLabel input = new JLabel("입력란: ");
+        JTextField answer = new JTextField(20);
+        userInputPanel.add(input);
+        userInputPanel.add(answer);
+
+        center.add(korPanel);
+        center.add(userInputPanel);
+
+        essayPanel.add(center,BorderLayout.CENTER);
+
+        List<Word> voc = manager.getVoc();
+        Word[] currentWord = new Word[1];
+        Random rand = new Random();
+
+        if(voc.isEmpty()){
+            korLabel.setText("단어장이 비어 있어 퀴즈를 진행할 수 없습니다.");
+            return essayPanel;
+        }
+
+        essayPanel.addComponentListener(new ComponentAdapter() {
+            @Override
+            public void componentShown(ComponentEvent e) {
+                if(voc.isEmpty()){
+                    korLabel.setText("단어장이 비어 있어 퀴즈를 진행할 수 없습니다.");
+                    return;
+                }
+                Word w = voc.get(rand.nextInt(voc.size()));
+                List<String> kors = w.getKors();
+                String kor = kors.get(rand.nextInt(kors.size()));
+
+                currentWord[0] = w;
+                korLabel.setText("한글 뜻: " + kor);
+                answer.setText("");
+                answer.requestFocusInWindow();
+            }
+        });
+
+        answer.addActionListener(e ->
+        {
+            if (currentWord[0] == null)
+                return;
+
+            String userInput = answer.getText().trim();
+            if (userInput.isEmpty()) {
+                JOptionPane.showMessageDialog(essayPanel, "영어 단어를 입력하세요.");
+                return;
+            }
+
+            String correct = currentWord[0].getEng();
+            if (userInput.equals(correct)) {
+                JOptionPane.showMessageDialog(essayPanel, "정답입니다! (" + correct + ")");
+            } else {
+                int beforeWrong = currentWord[0].getWrong_number();
+                currentWord[0].setWrong_number(beforeWrong + 1);
+
+                JOptionPane.showMessageDialog(essayPanel, "틀렸습니다.\n정답: " + correct);
+            }
+
+            Container parent = essayPanel.getParent();
+            CardLayout c = (CardLayout) parent.getLayout();
+            c.show(parent, "home");
+        });
+
+        return essayPanel;
+    }
+
 
     private JPanel createWordManagePanel() {
         JPanel panel = new JPanel(new BorderLayout());
