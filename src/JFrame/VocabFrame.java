@@ -2,7 +2,8 @@ package JFrame;
 
 import Service.VocabManager;
 import Vocab.Word;
-
+import java.util.List;
+import java.util.ArrayList;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
@@ -27,7 +28,7 @@ public class VocabFrame extends JFrame {
     private DefaultTableModel model;
     private String[] header = {"영단어", "뜻"};
 
-    public VocabFrame(VocabManager manager,String path, String exPath) {
+    public VocabFrame(VocabManager manager, String path, String exPath) {
         this.manager = manager;
         this.path = path;
         this.exPath = exPath;
@@ -75,6 +76,8 @@ public class VocabFrame extends JFrame {
     private void initMainCards() {
         mainCard = new CardLayout();
         mainCardPanel = new JPanel(mainCard);
+
+        mainCardPanel.add(createHomePanel(), "HOME");
 
         mainCardPanel.add(createWordManagePanel(), "WORD");  // (기능 1,2,3,4)
         mainCardPanel.add(createQuizPanel(), "QUIZ");   //TODO : 퀴즈패널  (기능 5)
@@ -365,7 +368,7 @@ public class VocabFrame extends JFrame {
         wordCardPanel.add(createAddPanel(), "ADD");
         wordCardPanel.add(createEditPanel(), "EDIT");
         wordCardPanel.add(createDeletePanel(), "DELETE");
-//        wordCardPanel.add(createSearchPanel(), "SEARCH");
+        wordCardPanel.add(createSearchPanel(), "SEARCH");
 
         panel.add(wordCardPanel, BorderLayout.CENTER);
 
@@ -386,53 +389,83 @@ public class VocabFrame extends JFrame {
     private JPanel createAddPanel() {
         JPanel panel = new JPanel(new BorderLayout());
 
-        // ----- 입력 폼 영역 -----
-        JPanel form = new JPanel(new GridLayout(3, 2, 5, 5));
+        // ----- 입력 폼 전체 래퍼 (여백 + 세로 정렬) -----
+        JPanel formWrapper = new JPanel();
+        formWrapper.setLayout(new BoxLayout(formWrapper, BoxLayout.Y_AXIS));
+        formWrapper.setBorder(BorderFactory.createEmptyBorder(20, 40, 20, 40));
+        //위/왼/아래/오 여백: 화면에 좀 여유를 줌
 
+        // 공통으로 쓸 헬퍼: 라벨 + 텍스트필드 한 줄 만들기
+        JPanel rowEng = new JPanel(new BorderLayout(10, 0));
         JLabel lblEng = new JLabel("영단어:");
-        JTextField tfEng = new JTextField(15);
+        JTextField tfEng = new JTextField(); // 컬럼 수는 굳이 안 줘도 됨 (자동으로 늘어남)
+        rowEng.add(lblEng, BorderLayout.WEST);
+        rowEng.add(tfEng, BorderLayout.CENTER);
 
+        JPanel rowKor = new JPanel(new BorderLayout(10, 0));
         JLabel lblKor = new JLabel("한글 뜻 (/로 여러 개):");
-        JTextField tfKor = new JTextField(20);
+        JTextField tfKor = new JTextField();
+        rowKor.add(lblKor, BorderLayout.WEST);
+        rowKor.add(tfKor, BorderLayout.CENTER);
 
+        JPanel rowEx = new JPanel(new BorderLayout(10, 0));
         JLabel lblEx = new JLabel("예문 (선택):");
-        JTextField tfEx = new JTextField(30);
+        JTextField tfEx = new JTextField();
+        rowEx.add(lblEx, BorderLayout.WEST);
+        rowEx.add(tfEx, BorderLayout.CENTER);
 
-        form.add(lblEng);
-        form.add(tfEng);
-        form.add(lblKor);
-        form.add(tfKor);
-        form.add(lblEx);
-        form.add(tfEx);
 
-        panel.add(form, BorderLayout.NORTH);
+        // 행들을 세로로 쌓기
+        formWrapper.add(rowEng);
+        formWrapper.add(Box.createVerticalStrut(10)); // 행 사이 간격
+        formWrapper.add(rowKor);
+        formWrapper.add(Box.createVerticalStrut(10));
+        formWrapper.add(rowEx);
 
-        // ----- 버튼 영역 -----
+        // 중앙에 배치 (이제 화면 가로를 꽉 채움)
+        panel.add(formWrapper, BorderLayout.CENTER);
+
+        // ----- 버튼 영역 (아래쪽, 가운데 정렬) -----
         JButton btnAdd = new JButton("추가");
         JPanel btnPanel = new JPanel();
+        btnPanel.setBorder(BorderFactory.createEmptyBorder(10, 0, 10, 0));
         btnPanel.add(btnAdd);
         panel.add(btnPanel, BorderLayout.SOUTH);
 
+        // 1) 영단어 입력 후 엔터 치면 뜻 입력칸으로 이동
+        tfEng.addActionListener(e -> tfKor.requestFocusInWindow());
+
+        // 2) 뜻 입력 후 엔터 치면 예문 칸으로 이동
+        tfKor.addActionListener(e -> tfEx.requestFocusInWindow());
+
+        // 3) 예문 칸에서 엔터 치면 "추가" 버튼 누른 것과 동일하게 실행
+        tfEx.addActionListener(e -> btnAdd.doClick());
+
+
         // ----- 버튼 동작 -----
         btnAdd.addActionListener(e -> {
-            String eng = tfEng.getText();
-            String korLine = tfKor.getText();
-            String ex = tfEx.getText();
+            String eng = tfEng.getText().trim();
+            String korLine = tfKor.getText().trim();
+            String ex = tfEx.getText().trim();
 
             // VocabManager의 추가 메서드 호출
             String msg = manager.addVocabCore(eng, korLine, ex);
 
             // 메시지 다이얼로그로 보여주기
-            JOptionPane.showMessageDialog(panel, msg, "단어 추가", JOptionPane.INFORMATION_MESSAGE);
+            JOptionPane.showMessageDialog(
+                    VocabFrame.this,
+                    msg,
+                    "단어 추가",
+                    JOptionPane.INFORMATION_MESSAGE
+            );
 
             // 성공적으로 추가됐다면 입력창 비우고 테이블 새로고침
-            if (msg.contains("새로 추가") || msg.contains("새 뜻")) {
+            if (msg.contains("추가")) {  // "새로 추가", "새 뜻 추가" 둘 다 포함
                 tfEng.setText("");
                 tfKor.setText("");
                 tfEx.setText("");
 
-                // 만약 전체 단어를 보여주는 JTable이 있다면 여기서 갱신
-                refreshTable();  // <- MainFrame에 이런 메서드 하나두고 여기서 호출
+                refreshTable();
             }
         });
 
@@ -445,7 +478,7 @@ public class VocabFrame extends JFrame {
         table = new JTable(model);
     }
 
-    // manager.voc --> 테이블 model 에 반영
+    // manager.voc --> 테이블 model 에 반영 (새로 뒤덮음)
     public void refreshTable() {
         model.setRowCount(0); // 기존 행 제거
 
@@ -459,8 +492,9 @@ public class VocabFrame extends JFrame {
     //단어 수정하는 패널
     private JPanel createEditPanel() {
         JPanel panel = new JPanel(new BorderLayout(10, 10));
+        panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
-        // ---- 1. 검색/불러오기 영역 ----
+        // ---- 1. 검색/불러오기 영역 (맨 위) ----
         JPanel top = new JPanel(new FlowLayout(FlowLayout.LEFT));
         JTextField tfSearchEng = new JTextField(15);
         JButton btnLoad = new JButton("불러오기");
@@ -483,18 +517,28 @@ public class VocabFrame extends JFrame {
         JList<String> korList = new JList<>(korListModel);
         JScrollPane korScroll = new JScrollPane(korList);
 
-        JTextArea taExample = new JTextArea(4, 30);
+        JTextArea taExample = new JTextArea(5, 30);
         taExample.setLineWrap(true);
         taExample.setWrapStyleWord(true);
         JScrollPane exScroll = new JScrollPane(taExample);
 
         infoPanel.add(lblCurrentEng, BorderLayout.NORTH);
 
-        JPanel centerLists = new JPanel(new GridLayout(1, 2, 5, 5));
-        centerLists.add(new JScrollPane(korList));
-        centerLists.add(exScroll);
+        // 왼쪽: 뜻 / 오른쪽: 예문 (제목 라벨까지 세트로)
+        JPanel listsPanel = new JPanel(new GridLayout(1, 2, 10, 0));
 
-        infoPanel.add(centerLists, BorderLayout.CENTER);
+        JPanel leftPane = new JPanel(new BorderLayout(5, 5));
+        leftPane.add(new JLabel("현재 뜻 목록"), BorderLayout.NORTH);
+        leftPane.add(korScroll, BorderLayout.CENTER);
+
+        JPanel rightPane = new JPanel(new BorderLayout(5, 5));
+        rightPane.add(new JLabel("예문"), BorderLayout.NORTH);
+        rightPane.add(exScroll, BorderLayout.CENTER);
+
+        listsPanel.add(leftPane);
+        listsPanel.add(rightPane);
+
+        infoPanel.add(listsPanel, BorderLayout.CENTER);
 
         center.add(infoPanel, BorderLayout.CENTER);
 
@@ -539,16 +583,39 @@ public class VocabFrame extends JFrame {
         // ---- 3. 불러오기 버튼 동작 ----
         btnLoad.addActionListener(e -> {
             String eng = tfSearchEng.getText().trim();
+
+            // 항상 먼저 입력창들 비우기
+            tfSearchEng.setText("");
+            tfNewEng.setText("");
+            tfAddKor.setText("");
+
             if (eng.isEmpty()) {
-                JOptionPane.showMessageDialog(panel, "영단어를 입력하세요.");
+                JOptionPane.showMessageDialog(
+                        VocabFrame.this,
+                        "영단어를 입력하세요."
+                );
+                // 현재 선택 상태도 초기화
+                currentWord[0] = null;
+                lblCurrentEng.setText("현재 영어: -");
+                korListModel.clear();
+                taExample.setText("");
                 return;
             }
 
             Word w = manager.findExact(eng);
             if (w == null) {
-                JOptionPane.showMessageDialog(panel, "해당 단어가 존재하지 않습니다.");
+                JOptionPane.showMessageDialog(
+                        VocabFrame.this,
+                        "해당 단어가 존재하지 않습니다."
+                );
+                // 단어 못 찾았을 때도 상태 초기화
+                currentWord[0] = null;
+                lblCurrentEng.setText("현재 영어: -");
+                korListModel.clear();
+                taExample.setText("");
                 return;
             }
+
             currentWord[0] = w;
 
             // 화면에 현재 상태 반영
@@ -566,35 +633,47 @@ public class VocabFrame extends JFrame {
         // ---- 4. 영어 수정 버튼 ----
         btnRenameEng.addActionListener(e -> {
             if (currentWord[0] == null) {
-                JOptionPane.showMessageDialog(panel, "먼저 단어를 불러와 주세요.");
+                JOptionPane.showMessageDialog(
+                        VocabFrame.this,
+                        "먼저 단어를 불러와 주세요."
+                );
                 return;
             }
             String oldEng = currentWord[0].getEng();
             String newEng = tfNewEng.getText().trim();
 
             String msg = manager.renameEng(oldEng, newEng);
-            JOptionPane.showMessageDialog(panel, msg);
+            JOptionPane.showMessageDialog(VocabFrame.this, msg);
+
+            // 항상 입력창 비우기
+            tfNewEng.setText("");
 
             // 성공 시 화면 갱신
             if (msg.startsWith("영어 단어가")) {
-                // currentWord[0]의 eng도 이미 바뀐 상태
                 lblCurrentEng.setText("현재 영어: " + currentWord[0].getEng());
-                refreshTable(); // 전체 테이블 갱신
+                refreshTable();
             }
         });
 
         // ---- 5. 뜻 추가 버튼 ----
         btnAddKor.addActionListener(e -> {
             if (currentWord[0] == null) {
-                JOptionPane.showMessageDialog(panel, "먼저 단어를 불러와 주세요.");
+                JOptionPane.showMessageDialog(
+                        VocabFrame.this,
+                        "먼저 단어를 불러와 주세요."
+                );
                 return;
             }
             String eng = currentWord[0].getEng();
             String korLine = tfAddKor.getText().trim();
-            String msg = manager.addKorMeanings(eng, korLine);
-            JOptionPane.showMessageDialog(panel, msg);
 
-            // 성공이면 리스트 갱신
+            String msg = manager.addKorMeanings(eng, korLine);
+            JOptionPane.showMessageDialog(VocabFrame.this, msg);
+
+            // 항상 입력창 비우기
+            tfAddKor.setText("");
+
+            // 목록 갱신
             korListModel.clear();
             for (String k : currentWord[0].getKors()) {
                 korListModel.addElement(k);
@@ -605,18 +684,23 @@ public class VocabFrame extends JFrame {
         // ---- 6. 선택 뜻 삭제 버튼 ----
         btnDelKor.addActionListener(e -> {
             if (currentWord[0] == null) {
-                JOptionPane.showMessageDialog(panel, "먼저 단어를 불러와 주세요.");
+                JOptionPane.showMessageDialog(
+                        VocabFrame.this,
+                        "먼저 단어를 불러와 주세요."
+                );
                 return;
             }
             int sel = korList.getSelectedIndex();
             if (sel == -1) {
-                JOptionPane.showMessageDialog(panel, "삭제할 뜻을 선택해주세요.");
+                JOptionPane.showMessageDialog(
+                        VocabFrame.this,
+                        "삭제할 뜻을 선택해주세요."
+                );
                 return;
             }
             String eng = currentWord[0].getEng();
-            // 1-based index로 넘기기
             String msg = manager.removeKorMeaning(eng, sel + 1);
-            JOptionPane.showMessageDialog(panel, msg);
+            JOptionPane.showMessageDialog(VocabFrame.this, msg);
 
             korListModel.clear();
             for (String k : currentWord[0].getKors()) {
@@ -628,21 +712,26 @@ public class VocabFrame extends JFrame {
         // ---- 7. 예문 저장 버튼 ----
         btnSaveEx.addActionListener(e -> {
             if (currentWord[0] == null) {
-                JOptionPane.showMessageDialog(panel, "먼저 단어를 불러와 주세요.");
+                JOptionPane.showMessageDialog(
+                        VocabFrame.this,
+                        "먼저 단어를 불러와 주세요."
+                );
                 return;
             }
             String eng = currentWord[0].getEng();
             String newEx = taExample.getText();
             String msg = manager.updateExample(eng, newEx);
-            JOptionPane.showMessageDialog(panel, msg);
+            JOptionPane.showMessageDialog(VocabFrame.this, msg);
         });
 
         return panel;
     }
 
-    // 삭제 패널
+
+    // 단어 삭제하는 패널
     private JPanel createDeletePanel() {
         JPanel panel = new JPanel(new BorderLayout(10, 10));
+        panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
         // ---- 1. 상단: 삭제할 단어 입력 + 불러오기 ----
         JPanel top = new JPanel(new FlowLayout(FlowLayout.LEFT));
@@ -655,26 +744,30 @@ public class VocabFrame extends JFrame {
 
         panel.add(top, BorderLayout.NORTH);
 
-        // ---- 2. 가운데: 단어 정보 미리보기 ----
-        JPanel center = new JPanel();
-        center.setLayout(new BoxLayout(center, BoxLayout.Y_AXIS));
-
-        JLabel lblEng   = new JLabel("영어: -");
-        JLabel lblKors  = new JLabel("뜻: -");
-        JLabel lblEx    = new JLabel("예문: -");
-
-        // 줄이 너무 길어질 수 있으니 스크롤 가능하게
-        JTextArea taInfo = new JTextArea(5, 30);
+        // ---- 2. 가운데: 단어 정보 (요약 하나만) ----
+        JTextArea taInfo = new JTextArea(7, 30);
         taInfo.setEditable(false);
         taInfo.setLineWrap(true);
         taInfo.setWrapStyleWord(true);
 
-        center.add(lblEng);
-        center.add(lblKors);
-        center.add(lblEx);
-        center.add(new JScrollPane(taInfo));
+        JScrollPane infoScroll = new JScrollPane(taInfo);
 
-        panel.add(center, BorderLayout.CENTER);
+        // ★ 즐겨찾기만 표시할 라벨
+        JLabel lblBookmarkIcon = new JLabel("☆"); // 기본은 비활성
+        lblBookmarkIcon.setFont(lblBookmarkIcon.getFont().deriveFont(24f)); // 조금 크게
+
+        JPanel infoTop = new JPanel(new BorderLayout());
+        infoTop.add(new JLabel("삭제 대상 단어 정보"), BorderLayout.WEST);
+        infoTop.add(lblBookmarkIcon, BorderLayout.EAST);
+
+        JPanel infoPanel = new JPanel(new BorderLayout());
+        infoPanel.setBorder(
+                BorderFactory.createEmptyBorder(5, 5, 5, 5)
+        );
+        infoPanel.add(infoTop, BorderLayout.NORTH);
+        infoPanel.add(infoScroll, BorderLayout.CENTER);
+
+        panel.add(infoPanel, BorderLayout.CENTER);
 
         // ---- 3. 하단: 삭제 버튼 ----
         JPanel bottom = new JPanel(new FlowLayout(FlowLayout.RIGHT));
@@ -682,79 +775,103 @@ public class VocabFrame extends JFrame {
         bottom.add(btnDelete);
         panel.add(bottom, BorderLayout.SOUTH);
 
-        // 현재 선택된 단어를 기억할 용도
+        // 현재 선택된 단어
         final Word[] currentWord = new Word[1];
+
+        // ---- 작은 헬퍼: 화면 초기화 ----
+        Runnable clearInfo = () -> {
+            currentWord[0] = null;
+            taInfo.setText("");
+            lblBookmarkIcon.setText("☆");   // 즐겨찾기 초기화
+        };
 
         // ---- 4. 불러오기 버튼 동작 ----
         btnLoad.addActionListener(e -> {
             String eng = tfEng.getText().trim();
+
+            // 검색창은 항상 비우기
+            tfEng.setText("");
+
             if (eng.isEmpty()) {
-                JOptionPane.showMessageDialog(panel, "영단어를 입력하세요.");
+                JOptionPane.showMessageDialog(
+                        VocabFrame.this,
+                        "영단어를 입력하세요.",
+                        "입력 오류",
+                        JOptionPane.WARNING_MESSAGE
+                );
+                clearInfo.run();
                 return;
             }
 
             Word w = manager.findExact(eng);
             if (w == null) {
-                JOptionPane.showMessageDialog(panel, "해당 단어가 존재하지 않습니다.");
-                currentWord[0] = null;
-                lblEng.setText("영어: -");
-                lblKors.setText("뜻: -");
-                lblEx.setText("예문: -");
-                taInfo.setText("");
+                JOptionPane.showMessageDialog(
+                        VocabFrame.this,
+                        "해당 단어가 존재하지 않습니다.",
+                        "단어 없음",
+                        JOptionPane.INFORMATION_MESSAGE
+                );
+                clearInfo.run();
                 return;
             }
 
             currentWord[0] = w;
 
-            // 화면에 정보 표시
-            lblEng.setText("영어: " + w.getEng());
             String kors = String.join("/ ", w.getKors());
-            lblKors.setText("뜻: " + kors);
+            if (kors.isEmpty()) kors = "-";
 
             String ex = manager.getExampleMap().get(w.getEng());
             if (ex == null || ex.trim().isEmpty()) {
                 ex = "(등록된 예문 없음)";
             }
-            lblEx.setText("예문: " + ex);
 
-            // 밑에 요약 정보도 보여주기
+            int wrong = w.getWrong_number();
+            boolean bookmarked = w.isBookMark();
+            lblBookmarkIcon.setText(bookmarked ? "⭐" : "☆");  // 즐겨찾기만 딱 보이게
+
+            // 여기 하나에 모든 정보 정리해서 보여줌
             taInfo.setText(
-                    "영어: " + w.getEng() + "\n" +
+                    "📌\n" +
+                            "영어: " + w.getEng() + "\n" +
                             "뜻: " + kors + "\n" +
                             "예문: " + ex + "\n" +
-                            "틀린 횟수: " + w.getWrong_number()
+                            "틀린 횟수: " + wrong + "\n"
             );
         });
 
         // ---- 5. 삭제 버튼 동작 ----
         btnDelete.addActionListener(e -> {
             if (currentWord[0] == null) {
-                JOptionPane.showMessageDialog(panel, "먼저 삭제할 단어를 불러와 주세요.");
+                JOptionPane.showMessageDialog(
+                        VocabFrame.this,
+                        "먼저 삭제할 단어를 불러와 주세요.",
+                        "알림",
+                        JOptionPane.INFORMATION_MESSAGE
+                );
                 return;
             }
 
             String eng = currentWord[0].getEng();
 
             int result = JOptionPane.showConfirmDialog(
-                    panel,
-                    "'" + eng + "' 단어를 정말 삭제하시겠습니까?",
+                    VocabFrame.this,
+                    "'" + eng + "' 단어를 정말 삭제하시겠습니까?\n" +
+                            "이 작업은 되돌릴 수 없습니다.",
                     "삭제 확인",
-                    JOptionPane.YES_NO_OPTION
+                    JOptionPane.YES_NO_OPTION,
+                    JOptionPane.WARNING_MESSAGE
             );
 
             if (result == JOptionPane.YES_OPTION) {
-                String msg = manager.deleteWord(eng);
-                JOptionPane.showMessageDialog(panel, msg);
+                String msg = manager.deleteWord(eng); // 공통 삭제 로직
+                JOptionPane.showMessageDialog(
+                        VocabFrame.this,
+                        msg,
+                        "삭제 결과",
+                        JOptionPane.INFORMATION_MESSAGE
+                );
 
-                // UI 초기화
-                currentWord[0] = null;
-                tfEng.setText("");
-                lblEng.setText("영어: -");
-                lblKors.setText("뜻: -");
-                lblEx.setText("예문: -");
-                taInfo.setText("");
-
-                // 테이블도 갱신
+                clearInfo.run();
                 refreshTable();
             }
         });
@@ -762,6 +879,135 @@ public class VocabFrame extends JFrame {
         return panel;
     }
 
+    // 검색 패널
+    private JPanel createSearchPanel() {
+        JPanel panel = new JPanel(new BorderLayout(10, 10));
+        panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+
+        // ---- 1. 상단: 방향 + 검색창 + 정렬 ----
+        JPanel top = new JPanel(new BorderLayout());
+
+        // 1-1) 왼쪽: 방향 + 검색창 + 버튼
+        JPanel left = new JPanel(new FlowLayout(FlowLayout.LEFT));
+
+        JRadioButton rbEngToKor = new JRadioButton("영 → 한", true);
+        JRadioButton rbKorToEng = new JRadioButton("한 → 영");
+        ButtonGroup dirGroup = new ButtonGroup();
+        dirGroup.add(rbEngToKor);
+        dirGroup.add(rbKorToEng);
+
+        JTextField tfQuery = new JTextField(20);
+        JButton btnSearch = new JButton("검색");
+
+        left.add(rbEngToKor);
+        left.add(rbKorToEng);
+        left.add(new JLabel("검색어:"));
+        left.add(tfQuery);
+        left.add(btnSearch);
+
+        // 1-2) 오른쪽: 정렬 라디오
+        JPanel right = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        JRadioButton rbAsc = new JRadioButton("Asc", true);
+        JRadioButton rbDesc = new JRadioButton("Desc");
+        ButtonGroup sortGroup = new ButtonGroup();
+        sortGroup.add(rbAsc);
+        sortGroup.add(rbDesc);
+        right.add(new JLabel("정렬:"));
+        right.add(rbAsc);
+        right.add(rbDesc);
+
+        top.add(left, BorderLayout.WEST);
+        top.add(right, BorderLayout.EAST);
+
+        panel.add(top, BorderLayout.NORTH);
+
+        // ---- 2. 가운데: 검색 결과 테이블 ----
+        DefaultTableModel searchModel = new DefaultTableModel(header, 0); // header = {"영단어","뜻"}
+        JTable searchTable = new JTable(searchModel);
+        panel.add(new JScrollPane(searchTable), BorderLayout.CENTER);
+
+        // 최근 검색 결과를 기억해두고 정렬만 바꿔서 다시 뿌릴 때 사용
+        final List<Word>[] lastResult = new List[]{new ArrayList<>()};
+
+        // ---- 3. 하단: 결과 개수 표시 ----
+        JLabel lblStatus = new JLabel("검색 결과: 0개");
+        panel.add(lblStatus, BorderLayout.SOUTH);
+
+        // ---- 헬퍼: lastResult를 기준으로 정렬 + 테이블 갱신 ----
+        Runnable refreshTableWithSort = () -> {
+            searchModel.setRowCount(0);
+            if (lastResult[0] == null || lastResult[0].isEmpty()) return;
+
+            boolean asc = rbAsc.isSelected();
+
+           List<Word> sorted = new ArrayList<>(lastResult[0]);
+            sorted.sort((w1, w2) -> {
+                int cmp = w1.getEng().compareToIgnoreCase(w2.getEng());
+                return asc ? cmp : -cmp;
+            });
+
+            for (Word w : sorted) {
+                String eng = w.getEng();
+                String kor = String.join("/ ", w.getKors());
+                searchModel.addRow(new Object[]{eng, kor});
+            }
+        };
+
+        // ---- 실제 검색하는 헬퍼 ----
+        Runnable doSearch = () -> {
+            String q = tfQuery.getText().trim();
+            if (q.isEmpty()) {
+                JOptionPane.showMessageDialog(
+                        VocabFrame.this,
+                        "검색어를 입력하세요.",
+                        "입력 오류",
+                        JOptionPane.WARNING_MESSAGE
+                );
+                tfQuery.setText("");  //입력 칸 비우기
+                return;
+            }
+
+           List<Word> result;
+            if (rbEngToKor.isSelected()) {
+                result = manager.findEngSubString(q);
+            } else {
+                result = manager.findKorSubString(q);
+            }
+
+            lastResult[0] = result;
+
+            if (result.isEmpty()) {
+                searchModel.setRowCount(0);
+                lblStatus.setText("검색 결과: 0개");
+                JOptionPane.showMessageDialog(
+                        VocabFrame.this,
+                        "검색 결과가 없습니다.",
+                        "검색",
+                        JOptionPane.INFORMATION_MESSAGE
+                );
+            } else {
+                lblStatus.setText("검색 결과: " + result.size() + "개");
+                refreshTableWithSort.run();
+            }
+
+            tfQuery.setText("");
+        };
+
+        // ---- 이벤트 연결 ----
+        // 버튼 클릭
+        btnSearch.addActionListener(e -> doSearch.run());
+        // 엔터 치면 검색
+        tfQuery.addActionListener(e -> doSearch.run());
+        // 정렬 라디오 바꾸면 현재 결과만 재정렬
+        rbAsc.addActionListener(e -> refreshTableWithSort.run());
+        rbDesc.addActionListener(e -> refreshTableWithSort.run());
+
+        return panel;
+    }
+
+
+
+    //************* 유용한 기능 패널 ****************
     private JPanel createUtilPanel() {
         JPanel panel = new JPanel(new BorderLayout());
 
@@ -827,26 +1073,63 @@ public class VocabFrame extends JFrame {
         JTable table = new JTable(bookmarkModel);
         panel.add(new JScrollPane(table), BorderLayout.CENTER);
 
-        // 하단 버튼 (즐겨찾기 해제 기능)
-        JButton btnDelete = new JButton("선택한 단어 즐겨찾기 해제");
-        panel.add(btnDelete, BorderLayout.SOUTH);
+        // 하단 버튼 영역 (추가 & 해제)
+        JPanel btnPanel = new JPanel(); // 버튼 2개를 담을 패널
+        JButton btnAdd = new JButton("단어 직접 추가");
+        JButton btnDelete = new JButton("선택한 단어 해제");
 
+        btnPanel.add(btnAdd);
+        btnPanel.add(btnDelete);
+        panel.add(btnPanel, BorderLayout.SOUTH);
+
+        // 1) [추가] 버튼 동작
+        btnAdd.addActionListener(e -> {
+            // 입력 팝업 띄우기
+            String input = JOptionPane.showInputDialog(panel, "즐겨찾기에 추가할 영단어를 입력하세요:");
+
+            // 취소했거나 빈칸이면 종료
+            if (input == null || input.trim().isEmpty()) return;
+
+            String target = input.trim();
+            boolean found = false;
+
+            // 단어장에서 찾아서 즐겨찾기 설정
+            for (Word w : manager.getVoc()) {
+                if (w.getEng().equals(target)) {
+                    if (w.isBookMark()) {
+                        JOptionPane.showMessageDialog(panel, "이미 즐겨찾기에 등록된 단어입니다.");
+                        return;
+                    }
+                    w.setBookMark(true); //즐겨찾기 true로 변경
+                    found = true;
+                    break;
+                }
+            }
+
+            if (found) {
+                refreshBookmarkTable(); // 테이블 새로고침
+                JOptionPane.showMessageDialog(panel, "'" + target + "' 단어가 즐겨찾기에 추가되었습니다!");
+            } else {
+                JOptionPane.showMessageDialog(panel, "단어장에 존재하지 않는 단어입니다.\n먼저 '단어 관리'에서 단어를 추가해주세요.");
+            }
+        });
+
+        // 2) [해제] 버튼 동작
         btnDelete.addActionListener(e -> {
             int row = table.getSelectedRow();
             if (row == -1) {
-                JOptionPane.showMessageDialog(panel, "해제할 단어를 선택해주세요.");
+                JOptionPane.showMessageDialog(panel, "해제할 단어를 표에서 선택해주세요.");
                 return;
             }
             String eng = (String) bookmarkModel.getValueAt(row, 0);
 
-            // 매니저를 통해 즐겨찾기 해제 처리
-            for(Word w : manager.getVoc()) {
-                if(w.getEng().equals(eng)) {
-                    w.setBookMark(false);
+            for (Word w : manager.getVoc()) {
+                if (w.getEng().equals(eng)) {
+                    w.setBookMark(false); // 즐겨찾기 false로 해제
                     break;
                 }
             }
-            refreshBookmarkTable(); // 테이블 갱신
+            refreshBookmarkTable();
             JOptionPane.showMessageDialog(panel, "즐겨찾기가 해제되었습니다.");
         });
 
@@ -967,9 +1250,48 @@ public class VocabFrame extends JFrame {
         return panel;
     }
 
+    //************* 시작 화면 *********
+    // 시작 화면 패널
+    private JPanel createHomePanel() {
+        JPanel panel = new JPanel(new BorderLayout());
+        panel.setBorder(BorderFactory.createEmptyBorder(40, 40, 40, 40));
 
+        // 상단 타이틀
+        JLabel title = new JLabel("단어장 프로그램", SwingConstants.CENTER);
+        title.setFont(title.getFont().deriveFont(Font.BOLD, 32f));
 
+        JLabel subtitle = new JLabel("위의 메뉴 또는 아래 버튼을 눌러 시작하세요.",
+                SwingConstants.CENTER);
+        subtitle.setFont(subtitle.getFont().deriveFont(16f));
 
+        JPanel titlePanel = new JPanel(new BorderLayout());
+        titlePanel.add(title, BorderLayout.NORTH);
+        titlePanel.add(subtitle, BorderLayout.SOUTH);
+
+        // 가운데 큰 버튼들
+        JButton btnGoWord = new JButton("단어 관리 시작하기");
+        JButton btnGoQuiz = new JButton("퀴즈 풀기");
+        JButton btnGoUtil = new JButton("유용한 기능");
+
+        btnGoWord.setFont(btnGoWord.getFont().deriveFont(18f));
+        btnGoQuiz.setFont(btnGoQuiz.getFont().deriveFont(18f));
+        btnGoUtil.setFont(btnGoUtil.getFont().deriveFont(18f));
+
+        // 누르면 해당 카드로 전환
+        btnGoWord.addActionListener(e -> mainCard.show(mainCardPanel, "WORD"));
+        btnGoQuiz.addActionListener(e -> mainCard.show(mainCardPanel, "QUIZ"));
+        btnGoUtil.addActionListener(e -> mainCard.show(mainCardPanel, "UTIL"));
+
+        JPanel centerButtons = new JPanel(new GridLayout(3, 1, 15, 15));
+        centerButtons.add(btnGoWord);
+        centerButtons.add(btnGoQuiz);
+        centerButtons.add(btnGoUtil);
+
+        panel.add(titlePanel, BorderLayout.NORTH);
+        panel.add(centerButtons, BorderLayout.CENTER);
+
+        return panel;
+    }
 
 
 }

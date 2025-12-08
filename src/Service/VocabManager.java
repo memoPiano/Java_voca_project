@@ -646,6 +646,7 @@ public class VocabManager extends FileManager {
         System.out.println("====== 하드 모드 결과 ======");
         System.out.println("총 " + numQuestions + "문제 중 " + localCorrect + "개 정답, " + localWrong + "개 오답.");
     }
+    //*********************  검색 메서드 **********************
 
     //검색 메서드
     private void searchVocab() {
@@ -714,7 +715,7 @@ public class VocabManager extends FileManager {
     }
 
     //한글로 검색해서 찾기
-    private List<Word> findKorSubString(String q) {
+    public List<Word> findKorSubString(String q) {
         ArrayList<Word> res = new ArrayList<>();
         for (Word w : voc) {
             for (String k : w.getKors()) {
@@ -728,7 +729,7 @@ public class VocabManager extends FileManager {
     }
 
     //영어로 검색해서 찾기
-    private List<Word> findEngSubString(String q) {
+    public List<Word> findEngSubString(String q) {
         ArrayList<Word> res = new ArrayList<>();
         for (Word w : voc) {
             String s = w.getEng();
@@ -975,7 +976,7 @@ public class VocabManager extends FileManager {
         }
     }
 
-
+//**************단어 수정 관련 메서드 ******************************
 
 //수정 기능 GUI 버전
 // 0) 단어 찾기 (GUI에서 현재 상태 불러올 때 사용)
@@ -1090,6 +1091,7 @@ public class VocabManager extends FileManager {
         }
     }
 
+    //*************** 이 아래는 단어 add 관련 메서드 ******************************
 
     // 옛날 콘솔용 단어 추가 기능 (Scanner 사용하는 버전)
     private void addVocab() {
@@ -1108,65 +1110,56 @@ public class VocabManager extends FileManager {
 
     // CLI / GUI 모두 동작하는 버전
     public String addVocabCore(String eng, String korLine, String exampleOpt) {
-        if (eng == null) eng = "";
-        if (korLine == null) korLine = "";
-        if (exampleOpt == null) exampleOpt = "";
+        // null 도 처리 + trim
+        eng        = java.util.Objects.toString(eng, "").trim();
+        korLine    = java.util.Objects.toString(korLine, "").trim();
+        exampleOpt = java.util.Objects.toString(exampleOpt, "").trim();
 
-        eng = eng.trim();
-        korLine = korLine.trim();
-
-        // 1. 영어 단어 유효성 검사
         if (eng.isEmpty() || !eng.matches("[a-zA-Z]+")) {
             return "유효하지 않은 영어 단어입니다. (영문자만 입력)";
         }
-
         if (korLine.isEmpty()) {
             return "뜻이 비어있습니다.";
         }
 
-        // 2. 한글 뜻 파싱 (Stream 사용)
+        // 1) 한글 뜻 파싱
         java.util.List<String> newKors =
                 java.util.Arrays.stream(korLine.split("/"))
                         .map(String::trim)
                         .filter(s -> !s.isEmpty())
-                        .distinct()   // 같은 줄 안에서 중복 제거
+                        .distinct()
                         .toList();
 
         if (newKors.isEmpty()) {
             return "유효한 뜻이 없습니다.";
         }
 
-        // 3. 기존 단어 있는지 확인
-        Word existing = vocabMap.get(eng); // 실제 Word 객체 참조
+        // 2) 기존 단어 있는지 확인
+        Word existing = vocabMap.get(eng);
 
         if (existing != null) {
             int beforeSize = existing.getKors().size();
 
-            // 기존 뜻 + 새 뜻 합치기 (중복은 제거)
-            for (String k : newKors) {
-                if (!existing.getKors().contains(k)) {
-                    existing.getKors().add(k);
-                }
-            }
+            // 새 뜻 중 기존에 없는 것만 추가 (stream 버전)
+            newKors.stream()
+                    .filter(k -> !existing.getKors().contains(k))
+                    .forEach(k -> existing.getKors().add(k));
 
             int addedCount = existing.getKors().size() - beforeSize;
 
             if (addedCount == 0) {
                 return "모든 뜻이 이미 존재합니다. 추가된 뜻이 없습니다.";
-            } else {
-                return "'" + eng + "' 에 새 뜻 " + addedCount + "개가 추가되었습니다.";
             }
+            return "'" + eng + "' 에 새 뜻 " + addedCount + "개가 추가되었습니다.";
 
         } else {
-            // 4. 새로운 단어 생성
+            // 3) 새로운 단어 생성
             Word newWord = new Word(eng);
             newWord.getKors().addAll(newKors);
 
             voc.add(newWord);
             vocabMap.put(eng, newWord);
 
-            // 예문(옵션) 추가
-            exampleOpt = exampleOpt.trim();
             if (!exampleOpt.isEmpty()) {
                 exampleMap.put(eng, exampleOpt);
             }
@@ -1174,6 +1167,7 @@ public class VocabManager extends FileManager {
             return "'" + eng + "' 단어가 새로 추가되었습니다.";
         }
     }
+
 
 
 
