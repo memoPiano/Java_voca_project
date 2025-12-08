@@ -647,7 +647,7 @@ public class VocabManager extends FileManager {
         System.out.println("총 " + numQuestions + "문제 중 " + localCorrect + "개 정답, " + localWrong + "개 오답.");
     }
 
-
+    //검색 메서드
     private void searchVocab() {
         if (voc.isEmpty()) {
             System.out.println("단어장이 비어있습니다.");
@@ -770,8 +770,34 @@ public class VocabManager extends FileManager {
         }
     }
 
-    //수정 기능
-    // 수정 기능
+    //GUI 용 삭제 메서드
+    // eng 단어 삭제 (voc, vocabMap, exampleMap 모두 정리)
+    public String deleteWord(String eng) {
+        if (eng == null) eng = "";
+        eng = eng.trim();
+
+        if (eng.isEmpty()) {
+            return "영어 단어가 비어 있습니다.";
+        }
+
+        Word w = vocabMap.get(eng);
+        if (w == null) {
+            return "해당 단어가 존재하지 않습니다.";
+        }
+
+        // 1) 리스트에서 제거
+        voc.remove(w);          // 같은 객체 참조라 이 한 줄이면 충분
+        // 2) 맵에서 제거
+        vocabMap.remove(eng);
+        // 3) 예문 맵에서도 제거
+        exampleMap.remove(eng);
+
+        return "'" + eng + "' 단어 삭제 완료!";
+    }
+
+
+
+    //수정 기능 (CLI 버전)
     private void editVocab() {
         if (voc.isEmpty()) {
             System.out.println("단어장이 비어있습니다.");
@@ -949,6 +975,110 @@ public class VocabManager extends FileManager {
         }
     }
 
+
+
+//수정 기능 GUI 버전
+// 0) 단어 찾기 (GUI에서 현재 상태 불러올 때 사용)
+    public Word findExact(String eng) {
+        if (eng == null) return null;
+        return vocabMap.get(eng.trim());
+    }
+
+    // 1) 영어 단어 이름 변경
+    public String renameEng(String oldEng, String newEng) {
+        if (oldEng == null) oldEng = "";
+        if (newEng == null) newEng = "";
+        oldEng = oldEng.trim();
+        newEng = newEng.trim();
+
+        Word w = vocabMap.get(oldEng);
+        if (w == null) return "해당 단어가 존재하지 않습니다.";
+
+        if (newEng.isEmpty()) {
+            return "입력이 비어 있습니다. 수정 취소.";
+        }
+        if (!newEng.equals(oldEng) && vocabMap.containsKey(newEng)) {
+            return "이미 존재하는 영어 단어입니다. 다른 단어를 입력해주세요.";
+        }
+
+        // 맵 키 변경
+        vocabMap.remove(oldEng);
+        w.setEng(newEng);
+        vocabMap.put(newEng, w);
+
+        // 예문 key도 같이 변경
+        updateExampleKey(oldEng, newEng);
+
+        return "영어 단어가 '" + oldEng + "' → '" + newEng + "' 로 수정되었습니다.";
+    }
+
+    // 2) 한글 뜻 추가 (/로 여러 개 가능)
+    public String addKorMeanings(String eng, String korLine) {
+        if (eng == null) eng = "";
+        if (korLine == null) korLine = "";
+        eng = eng.trim();
+        korLine = korLine.trim();
+
+        Word w = vocabMap.get(eng);
+        if (w == null) return "해당 단어가 존재하지 않습니다.";
+        if (korLine.isEmpty()) return "입력이 비어 있습니다.";
+
+        String[] addList = korLine.split("/");
+        int before = w.getKors().size();
+
+        java.util.Arrays.stream(addList)
+                .map(String::trim)
+                .filter(s -> !s.isEmpty())
+                .filter(s -> !w.getKors().contains(s))
+                .forEach(s -> w.getKors().add(s));
+
+        int added = w.getKors().size() - before;
+
+        if (added == 0) {
+            return "모든 뜻이 이미 존재합니다. 추가된 뜻이 없습니다.";
+        } else {
+            return "뜻 " + added + "개가 추가되었습니다. 현재 뜻: " + w.getKors();
+        }
+    }
+
+    // 3) 한글 뜻 삭제 (1-based index)
+    public String removeKorMeaning(String eng, int index1Based) {
+        if (eng == null) eng = "";
+        eng = eng.trim();
+        Word w = vocabMap.get(eng);
+        if (w == null) return "해당 단어가 존재하지 않습니다.";
+
+        if (w.getKors().isEmpty()) return "삭제할 뜻이 없습니다.";
+
+        if (index1Based < 1 || index1Based > w.getKors().size()) {
+            return "유효하지 않은 번호입니다.";
+        }
+
+        String removed = w.getKors().remove(index1Based - 1);
+        if (w.getKors().isEmpty()) {
+            return "뜻 '" + removed + "' 삭제 완료! (남은 뜻 없음)";
+        } else {
+            return "뜻 '" + removed + "' 삭제 완료! 현재 뜻: " + w.getKors();
+        }
+    }
+
+    // 4) 예문 수정/삭제
+    public String updateExample(String eng, String newExample) {
+        if (eng == null) eng = "";
+        eng = eng.trim();
+        Word w = vocabMap.get(eng);
+        if (w == null) return "해당 단어가 존재하지 않습니다.";
+
+        if (newExample == null || newExample.trim().isEmpty()) {
+            exampleMap.remove(eng);
+            return "예문이 삭제되었습니다.";
+        } else {
+            exampleMap.put(eng, newExample.trim());
+            return "예문이 저장되었습니다.";
+        }
+    }
+
+
     //영어를 바꾸면 예문의 key도 같이 옮겨줘야 함.
     private void updateExampleKey(String oldEng, String newEng) {
         if (oldEng.equals(newEng))
@@ -961,90 +1091,174 @@ public class VocabManager extends FileManager {
     }
 
 
-
-
-    //추가 기능
-    //voc 와 vocabMap 업데이트로 수정 -- 강동훈
-    //1. 영단어가 이미 있을 시 --> 입력한 한글 뜻이 이미 있으면, 중복이라 추가 안하고 종료
-    //이어서 새로운 뜻이 하나라도 있으면, 그 새로운 뜻만 맨 뒤에 추가
-    //2. 영단어가 없으면, 새로운 Word 하나 만들어서, voc 와 vocabMap 에 전부 추가
+    // 옛날 콘솔용 단어 추가 기능 (Scanner 사용하는 버전)
     private void addVocab() {
         System.out.print("[추가] 추가할 영단어를 입력하세요: ");
-        String eng = scan.nextLine().trim();
-
-        // 영어 단어 유효성 검사 (한글이나 이상한게 껴있으면 reject)
-        if (eng.isEmpty() || !eng.matches("[a-zA-Z]+")) {
-            System.out.println("유효하지 않은 영어 단어입니다. (영문자만 입력)");
-            return;
-        }
+        String eng = scan.nextLine();
 
         System.out.print("한글 뜻을 입력하세요 (여러 개면 '/' 로 구분): ");
-        String korLine = scan.nextLine().trim();
+        String korLine = scan.nextLine();
+
+        System.out.print("예문을 입력하시겠습니까? (없으면 그냥 엔터) : ");
+        String ex = scan.nextLine();
+
+        String msg = addVocabCore(eng, korLine, ex);
+        System.out.println(msg);
+    }
+
+    // CLI / GUI 모두 동작하는 버전
+    public String addVocabCore(String eng, String korLine, String exampleOpt) {
+        if (eng == null) eng = "";
+        if (korLine == null) korLine = "";
+        if (exampleOpt == null) exampleOpt = "";
+
+        eng = eng.trim();
+        korLine = korLine.trim();
+
+        // 1. 영어 단어 유효성 검사
+        if (eng.isEmpty() || !eng.matches("[a-zA-Z]+")) {
+            return "유효하지 않은 영어 단어입니다. (영문자만 입력)";
+        }
+
         if (korLine.isEmpty()) {
-            System.out.println("뜻이 비어있습니다.");
-            return;
+            return "뜻이 비어있습니다.";
         }
 
-        // 한글 뜻 파싱
-        String[] parts = korLine.split("/");
-        ArrayList<String> newKors = new ArrayList<>();
-        for (String p : parts) {
-            String k = p.trim();
-            if (!k.isEmpty() && !newKors.contains(k)) { // 같은 줄 안에서 중복 제거
-                newKors.add(k);
-            }
-        }
+        // 2. 한글 뜻 파싱 (Stream 사용)
+        java.util.List<String> newKors =
+                java.util.Arrays.stream(korLine.split("/"))
+                        .map(String::trim)
+                        .filter(s -> !s.isEmpty())
+                        .distinct()   // 같은 줄 안에서 중복 제거
+                        .toList();
+
         if (newKors.isEmpty()) {
-            System.out.println("유효한 뜻이 없습니다.");
-            return;
+            return "유효한 뜻이 없습니다.";
         }
 
-        // 이미 존재하는 영단어인지 검사
-        //이건 복사본이 아니라, 해당 Word 객체를 가리킴. (같은 주소값으로 참조)
-        Word existing = vocabMap.get(eng);
+        // 3. 기존 단어 있는지 확인
+        Word existing = vocabMap.get(eng); // 실제 Word 객체 참조
 
         if (existing != null) {
-            // 1-1,1-2번 케이스: 기존 단어에 대해 중복 여부 확인
-            int addedCount = 0;
-            //newKors 는 내가 등록할 한글 뜻들. 이게 기존 단어에 포함되어있는지 체크
+            int beforeSize = existing.getKors().size();
+
+            // 기존 뜻 + 새 뜻 합치기 (중복은 제거)
             for (String k : newKors) {
                 if (!existing.getKors().contains(k)) {
-                    existing.getKors().add(k);  // 새 뜻만 뒤에 추가
-                    addedCount++;
+                    existing.getKors().add(k);
                 }
             }
 
+            int addedCount = existing.getKors().size() - beforeSize;
+
             if (addedCount == 0) {
-                // 1. 입력한 모든 뜻이 이미 존재
-                System.out.println("모든 뜻이 이미 존재합니다. 추가된 뜻이 없습니다.");
+                return "모든 뜻이 이미 존재합니다. 추가된 뜻이 없습니다.";
             } else {
-                // 2. 일부 또는 전부 새 뜻이라서 추가됨
-                System.out.println("'" + eng + "' 에 새 뜻 " + addedCount + "개가 추가되었습니다.");
-                System.out.println("현재 뜻: " + existing.getKors());
+                return "'" + eng + "' 에 새 뜻 " + addedCount + "개가 추가되었습니다.";
             }
 
         } else {
-            // 3. 새로운 영단어
+            // 4. 새로운 단어 생성
             Word newWord = new Word(eng);
             newWord.getKors().addAll(newKors);
 
-            voc.add(newWord);            // 리스트에 추가
-            vocabMap.put(eng, newWord);  // 맵에도 추가
+            voc.add(newWord);
+            vocabMap.put(eng, newWord);
 
-            // 예문 입력 추가
-            System.out.print("예문을 입력하시겠습니까? (없으면 그냥 엔터) : ");
-            String ex = scan.nextLine().trim();
-            if (!ex.isEmpty()) {
-                exampleMap.put(eng, ex);
-                System.out.println("예문이 등록되었습니다.");
-            } else {
-                System.out.println("예문 없이 단어만 등록되었습니다.");
+            // 예문(옵션) 추가
+            exampleOpt = exampleOpt.trim();
+            if (!exampleOpt.isEmpty()) {
+                exampleMap.put(eng, exampleOpt);
             }
-            System.out.println("=".repeat(20));
-            System.out.println("'" + eng + "' 단어가 새로 추가되었습니다.");
-            System.out.println("뜻: " + newWord.getKors());
-            System.out.println("예문: "+exampleMap.get(newWord.getEng()));
+
+            return "'" + eng + "' 단어가 새로 추가되었습니다.";
         }
     }
+
+
+
+//    //추가 기능
+//    //voc 와 vocabMap 업데이트로 수정 -- 강동훈
+//    //1. 영단어가 이미 있을 시 --> 입력한 한글 뜻이 이미 있으면, 중복이라 추가 안하고 종료
+//    //이어서 새로운 뜻이 하나라도 있으면, 그 새로운 뜻만 맨 뒤에 추가
+//    //2. 영단어가 없으면, 새로운 Word 하나 만들어서, voc 와 vocabMap 에 전부 추가
+//    private void addVocab() {
+//        System.out.print("[추가] 추가할 영단어를 입력하세요: ");
+//        String eng = scan.nextLine().trim();
+//
+//        // 영어 단어 유효성 검사 (한글이나 이상한게 껴있으면 reject)
+//        if (eng.isEmpty() || !eng.matches("[a-zA-Z]+")) {
+//            System.out.println("유효하지 않은 영어 단어입니다. (영문자만 입력)");
+//            return;
+//        }
+//
+//        System.out.print("한글 뜻을 입력하세요 (여러 개면 '/' 로 구분): ");
+//        String korLine = scan.nextLine().trim();
+//        if (korLine.isEmpty()) {
+//            System.out.println("뜻이 비어있습니다.");
+//            return;
+//        }
+//
+//        // 한글 뜻 파싱
+//        String[] parts = korLine.split("/");
+//        ArrayList<String> newKors = new ArrayList<>();
+//        for (String p : parts) {
+//            String k = p.trim();
+//            if (!k.isEmpty() && !newKors.contains(k)) { // 같은 줄 안에서 중복 제거
+//                newKors.add(k);
+//            }
+//        }
+//        if (newKors.isEmpty()) {
+//            System.out.println("유효한 뜻이 없습니다.");
+//            return;
+//        }
+//
+//        // 이미 존재하는 영단어인지 검사
+//        //이건 복사본이 아니라, 해당 Word 객체를 가리킴. (같은 주소값으로 참조)
+//        Word existing = vocabMap.get(eng);
+//
+//        if (existing != null) {
+//            // 1-1,1-2번 케이스: 기존 단어에 대해 중복 여부 확인
+//            int addedCount = 0;
+//            //newKors 는 내가 등록할 한글 뜻들. 이게 기존 단어에 포함되어있는지 체크
+//            for (String k : newKors) {
+//                if (!existing.getKors().contains(k)) {
+//                    existing.getKors().add(k);  // 새 뜻만 뒤에 추가
+//                    addedCount++;
+//                }
+//            }
+//
+//            if (addedCount == 0) {
+//                // 1. 입력한 모든 뜻이 이미 존재
+//                System.out.println("모든 뜻이 이미 존재합니다. 추가된 뜻이 없습니다.");
+//            } else {
+//                // 2. 일부 또는 전부 새 뜻이라서 추가됨
+//                System.out.println("'" + eng + "' 에 새 뜻 " + addedCount + "개가 추가되었습니다.");
+//                System.out.println("현재 뜻: " + existing.getKors());
+//            }
+//
+//        } else {
+//            // 3. 새로운 영단어
+//            Word newWord = new Word(eng);
+//            newWord.getKors().addAll(newKors);
+//
+//            voc.add(newWord);            // 리스트에 추가
+//            vocabMap.put(eng, newWord);  // 맵에도 추가
+//
+//            // 예문 입력 추가
+//            System.out.print("예문을 입력하시겠습니까? (없으면 그냥 엔터) : ");
+//            String ex = scan.nextLine().trim();
+//            if (!ex.isEmpty()) {
+//                exampleMap.put(eng, ex);
+//                System.out.println("예문이 등록되었습니다.");
+//            } else {
+//                System.out.println("예문 없이 단어만 등록되었습니다.");
+//            }
+//            System.out.println("=".repeat(20));
+//            System.out.println("'" + eng + "' 단어가 새로 추가되었습니다.");
+//            System.out.println("뜻: " + newWord.getKors());
+//            System.out.println("예문: "+exampleMap.get(newWord.getEng()));
+//        }
+//    }
 
 }
