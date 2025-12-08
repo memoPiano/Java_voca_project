@@ -1,5 +1,6 @@
 package Main;
 
+import JFrame.VocabFrame; // GUI 프레임 임포트
 import Service.FileManager;
 import Service.VocabManager;
 import Vocab.Word;
@@ -32,6 +33,7 @@ public class MainMenu {
 
         // 4. 메뉴 구동
         vm.menu();
+//        new VocabFrame(vm);
 
         // 5. 메뉴 끝나면 저장
         fm.saveToFile(vm.getVoc());
