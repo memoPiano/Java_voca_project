@@ -18,6 +18,10 @@ public class VocabManager extends FileManager {
         this.userName = userName;
     }   //생성자
 
+    public String getUserName() {
+        return userName;
+    }
+
     public void setAll(Collection<Word> list) {
         voc.clear(); //깔끔하게 비움
         vocabMap.clear();
