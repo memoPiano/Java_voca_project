@@ -1,6 +1,7 @@
 package JFrame;
 
 import Service.VocabManager;
+import Service.FileManager;
 import Vocab.Word;
 import java.util.List;
 import java.util.ArrayList;
@@ -251,6 +252,9 @@ public class VocabFrame extends JFrame {
             }
             JOptionPane.showMessageDialog(panel, msg);
 
+            FileManager fm = new FileManager(path);
+            fm.saveToFile(manager.getVoc());
+
             builder.reset();
         });
 
@@ -334,6 +338,9 @@ public class VocabFrame extends JFrame {
 
                 JOptionPane.showMessageDialog(essayPanel, "틀렸습니다.\n정답: " + correct);
             }
+
+            FileManager fm = new FileManager(path);
+            fm.saveToFile(manager.getVoc());
 
             Container parent = essayPanel.getParent();
             CardLayout c = (CardLayout) parent.getLayout();
