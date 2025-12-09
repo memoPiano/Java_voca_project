@@ -1015,12 +1015,12 @@ public class VocabFrame extends JFrame {
         JPanel menu = new JPanel(new GridLayout(4, 1, 5, 5));
         JButton btnBookmark = new JButton("즐겨찾기");
         JButton btnWrongNote = new JButton("오답 노트");
-        JButton btnRetest = new JButton("오답 재시험");
+        //JButton btnRetest = new JButton("오답 재시험");
         JButton btnRandom = new JButton("오늘의 단어");
 
         menu.add(btnBookmark);
         menu.add(btnWrongNote);
-        menu.add(btnRetest);
+        //menu.add(btnRetest);
         menu.add(btnRandom);
 
         panel.add(menu, BorderLayout.WEST);
@@ -1032,7 +1032,7 @@ public class VocabFrame extends JFrame {
         // 각 기능별 패널 생성 및 추가
         utilCardPanel.add(createBookmarkPanel(), "BOOKMARK");  // 즐겨찾기 패널
         utilCardPanel.add(createWrongNotePanel(), "WRONG");    // 오답노트 패널
-        utilCardPanel.add(createRetestPanel(), "RETEST");      // 재시험 패널
+        //utilCardPanel.add(createRetestPanel(), "RETEST");      // 재시험 패널
         utilCardPanel.add(createRandomWordPanel(), "RANDOM");  // 오늘의 단어 패널
 
         panel.add(utilCardPanel, BorderLayout.CENTER);
@@ -1048,7 +1048,7 @@ public class VocabFrame extends JFrame {
             utilCard.show(utilCardPanel, "WRONG");
         });
 
-        btnRetest.addActionListener(e -> utilCard.show(utilCardPanel, "RETEST"));
+        //btnRetest.addActionListener(e -> utilCard.show(utilCardPanel, "RETEST"));
 
         btnRandom.addActionListener(e -> {
             updateRandomWords(); // 랜덤 단어 새로고침
@@ -1240,15 +1240,15 @@ public class VocabFrame extends JFrame {
 
     //  4. 재시험 패널 (미완)
 
-    private JPanel createRetestPanel() {
-        JPanel panel = new JPanel(new BorderLayout());
-        JLabel msg = new JLabel("재시험 기능 아직 구현안함", JLabel.CENTER);
-
-        // 퀴즈 패널을 재활용하는 게 좋을 것 같아서 아직 안했습니다
-
-        panel.add(msg, BorderLayout.CENTER);
-        return panel;
-    }
+//    private JPanel createRetestPanel() {
+//        JPanel panel = new JPanel(new BorderLayout());
+//        JLabel msg = new JLabel("재시험 기능 아직 구현안함", JLabel.CENTER);
+//
+//        // 퀴즈 패널을 재활용하는 게 좋을 것 같아서 아직 안했습니다
+//
+//        panel.add(msg, BorderLayout.CENTER);
+//        return panel;
+//    }
 
     //************* 시작 화면 *********
     // 시작 화면 패널
