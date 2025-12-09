@@ -29,6 +29,12 @@ public class VocabFrame extends JFrame {
     private DefaultTableModel model;
     private String[] header = {"영단어", "뜻"};
 
+    // 통계 패널용 컴포넌트
+    private JLabel lblStatsTotal;
+    private JLabel lblStatsBookmark;
+    private JLabel lblStatsWrongWords;
+    private JTextArea taStatsTopWrong;
+
     public VocabFrame(VocabManager manager, String path, String exPath) {
         this.manager = manager;
         this.path = path;
@@ -43,14 +49,12 @@ public class VocabFrame extends JFrame {
         frame.setLayout(new BorderLayout());
 
         initTable();     // 테이블 객체 먼저 생성
+        initMenuBar();  //메뉴바
         initTopMenu();   //상단 메뉴(단어관리 / 퀴즈 / 유용한 기능 선택)
         initMainCards();  //중앙은 카드 레이아웃으로 배치, 여기서 WORD 카드 안에 테이블이 붙음
         refreshTable();  // 파일에서 읽어온 단어들 한 번 뿌리기
 
         setVisible(true);
-    }
-
-    public VocabFrame(VocabManager vm) {
     }
 
     //북쪽에 달릴 메뉴
@@ -87,6 +91,8 @@ public class VocabFrame extends JFrame {
         frame.add(mainCardPanel, BorderLayout.CENTER);
     }
 
+    // *************** 퀴즈 패널 ********************************
+
     private JPanel createQuizPanel() {
         JPanel mainPanel =new JPanel(new BorderLayout());
         JPanel btnPanel = new JPanel(new GridLayout(2,1,10,10));
@@ -115,70 +121,115 @@ public class VocabFrame extends JFrame {
         return mainPanel;
     }
 
+    // 객관식(4지선다) 퀴즈용 카드 생성
     private JPanel addChoiceCard() {
+        // 전체 패널: 위(설명) + 가운데(문제 스크롤) + 아래(채점 버튼)
         JPanel panel = new JPanel(new BorderLayout(10, 10));
+        panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+
         List<Word> voc = manager.getVoc();
 
+        // 1. 단어 수가 너무 적을 때 안내 메시지만 출력
         if (voc.size() < 4) {
-            panel.add(new JLabel("단어가 4개 이상 있어야 객관식 퀴즈를 진행할 수 있습니다.", JLabel.CENTER),
-                    BorderLayout.CENTER);
+            JLabel msg = new JLabel(
+                    "단어가 4개 이상 있어야 객관식 퀴즈를 진행할 수 있습니다.",
+                    JLabel.CENTER
+            );
+            msg.setFont(msg.getFont().deriveFont(16f));
+            panel.add(msg, BorderLayout.CENTER);
             return panel;
         }
 
+        // 상단 타이틀
+        JLabel title = new JLabel("객관식 퀴즈 (랜덤 최대 5문제)", JLabel.CENTER);
+        title.setFont(title.getFont().deriveFont(Font.BOLD, 18f));
+        panel.add(title, BorderLayout.NORTH);
+
+        // 한 번에 최대 5문제까지만 출제
         int numQuestions = Math.min(5, voc.size());
+
+        // 2. 실제 문제들을 넣을 컨테이너 (스크롤 안에 들어감)
         JPanel content = new JPanel();
-        content.setLayout(new GridLayout(numQuestions, 1, 0, 10));
+        content.setLayout(new GridLayout(numQuestions, 1, 0, 0)); // 문제 수 × 1행
+
         JScrollPane scroll = new JScrollPane(content);
+        scroll.getVerticalScrollBar().setUnitIncrement(16); // 스크롤 부드럽게
         panel.add(scroll, BorderLayout.CENTER);
 
+        // 각 문제마다 선택지를 하나만 고를 수 있도록 ButtonGroup 배열
         ButtonGroup[] groups = new ButtonGroup[numQuestions];
+        // 각 문제마다 4개의 보기(라디오 버튼)를 저장할 배열
         JRadioButton[][] choiceButtons = new JRadioButton[numQuestions][4];
+        // 각 문제의 정답(Word)을 저장할 배열
         Word[] answers = new Word[numQuestions];
+
         Random rand = new Random();
 
+        // =======================
+        // 내부 클래스: 문제를 다시 만드는 역할
+        // =======================
         class QuizBuilder {
+            // 전체 객관식 문제 세트를 새로 생성
             void reset() {
-                content.removeAll();
+                content.removeAll(); // 전에 만들었던 문제들 다 삭제
 
                 for (int q = 0; q < numQuestions; q++) {
+                    // -------- (1) 정답 단어 선택 --------
                     Word answer = voc.get(rand.nextInt(voc.size()));
                     answers[q] = answer;
 
+                    // 한글 뜻 여러 개 중에서 화면에 보여줄 문자열 만들기
                     List<String> kors = answer.getKors();
-                    String korText = "";
+                    StringBuilder korTextBuilder = new StringBuilder();
                     for (int i = 0; i < kors.size(); i++) {
-                        if (i > 0) {
-                            korText += " / ";
-                        }
-                        korText += kors.get(i);
+                        if (i > 0) korTextBuilder.append(" / ");
+                        korTextBuilder.append(kors.get(i));
                     }
+                    String korText = korTextBuilder.toString();
 
+                    // -------- (2) 문제 하나를 감쌀 패널 --------
                     JPanel questionPanel = new JPanel(new BorderLayout(5, 5));
+                    // 위쪽에는 얇은 구분선, 내부에는 여백
+                    questionPanel.setBorder(
+                            BorderFactory.createCompoundBorder(
+                                    BorderFactory.createMatteBorder(0, 0, 1, 0, Color.LIGHT_GRAY),
+                                    BorderFactory.createEmptyBorder(8, 8, 8, 8)
+                            )
+                    );
 
+                    // "Q1. 한글뜻..." 라벨
                     JLabel qLabel = new JLabel("Q" + (q + 1) + ". " + korText);
+                    qLabel.setFont(qLabel.getFont().deriveFont(Font.BOLD, 15f));
                     JPanel labelPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
                     labelPanel.add(qLabel);
                     questionPanel.add(labelPanel, BorderLayout.NORTH);
 
+                    // -------- (3) 보기(선택지) 4개 구성 --------
                     ButtonGroup group = new ButtonGroup();
                     groups[q] = group;
 
+                    // 보기 후보 리스트에 정답 하나 넣고
                     List<Word> options = new ArrayList<>();
                     options.add(answer);
 
+                    // 나머지 3개는 오답(다른 단어)에서 랜덤으로 채우기
                     while (options.size() < 4) {
                         Word candidate = voc.get(rand.nextInt(voc.size()));
-                        if (!options.contains(candidate)) {
+                        if (!options.contains(candidate)) { // 중복 방지
                             options.add(candidate);
                         }
                     }
 
+                    // 보기 순서 섞기 (정답 위치 매번 랜덤)
                     Collections.shuffle(options, rand);
 
+                    // 선택지는 2×2 그리드로 배치
                     JPanel choicesPanel = new JPanel(new GridLayout(2, 2, 5, 5));
+
                     for (int i = 0; i < 4; i++) {
                         Word optionWord = options.get(i);
                         JRadioButton rb = new JRadioButton(optionWord.getEng());
+                        rb.setFont(rb.getFont().deriveFont(14f));
                         choiceButtons[q][i] = rb;
                         group.add(rb);
                         choicesPanel.add(rb);
@@ -193,12 +244,21 @@ public class VocabFrame extends JFrame {
             }
         }
 
+        // 실제 퀴즈 빌더 객체 생성 및 초기 문제 세트 생성
         QuizBuilder builder = new QuizBuilder();
         builder.reset();
 
+        // 3. 하단 "채점하기" 버튼
         JButton submitBtn = new JButton("채점하기");
-        panel.add(submitBtn, BorderLayout.SOUTH);
+        submitBtn.setFont(submitBtn.getFont().deriveFont(Font.BOLD, 15f));
 
+        JPanel south = new JPanel(new FlowLayout(FlowLayout.CENTER));
+        south.add(submitBtn);
+        panel.add(south, BorderLayout.SOUTH);
+
+        // =======================
+        // 채점 버튼 클릭 시 동작
+        // =======================
         submitBtn.addActionListener(e -> {
             int correct = 0;
             int wrong = 0;
@@ -206,14 +266,12 @@ public class VocabFrame extends JFrame {
 
             for (int i = 0; i < groups.length; i++) {
                 ButtonGroup g = groups[i];
-                if (g == null) {
-                    continue;
-                }
-                Word answer = answers[i];
-                if (answer == null) {
-                    continue;
-                }
+                if (g == null) continue;
 
+                Word answer = answers[i];
+                if (answer == null) continue;
+
+                // 사용자가 고른 보기의 인덱스 찾기
                 int selectedIndex = -1;
                 for (int j = 0; j < 4; j++) {
                     JRadioButton rb = choiceButtons[i][j];
@@ -223,6 +281,7 @@ public class VocabFrame extends JFrame {
                     }
                 }
 
+                // 정답이 들어있는 보기의 인덱스 찾기
                 int correctIndex = -1;
                 for (int j = 0; j < 4; j++) {
                     JRadioButton rb = choiceButtons[i][j];
@@ -232,10 +291,12 @@ public class VocabFrame extends JFrame {
                     }
                 }
 
+                // 정답 여부 판정
                 if (selectedIndex != -1 && selectedIndex == correctIndex) {
                     correct++;
                 } else {
                     wrong++;
+                    // 틀린 문제는 Word의 wrong_number 증가
                     answer.setWrong_number(answer.getWrong_number() + 1);
                     if (!wrongWords.contains(answer)) {
                         wrongWords.add(answer);
@@ -243,21 +304,39 @@ public class VocabFrame extends JFrame {
                 }
             }
 
-            String msg = "총 " + (correct + wrong) + "문제 중 " + correct + "개 정답, " + wrong + "개 오답\n";
+            // 결과 메시지 구성
+            StringBuilder msg = new StringBuilder();
+            msg.append("총 ")
+                    .append(correct + wrong)
+                    .append("문제 중 ")
+                    .append(correct).append("개 정답, ")
+                    .append(wrong).append("개 오답\n");
+
             if (!wrongWords.isEmpty()) {
-                msg += "\n틀린 단어 목록:\n";
+                msg.append("\n틀린 단어 목록:\n");
                 for (Word w : wrongWords) {
-                    msg += "- " + w.getEng() + " (현재 오답 횟수: " + w.getWrong_number() + "회)\n";
+                    msg.append("- ")
+                            .append(w.getEng())
+                            .append(" (현재 오답 횟수: ")
+                            .append(w.getWrong_number())
+                            .append("회)\n");
                 }
             }
-            JOptionPane.showMessageDialog(panel, msg);
 
+            JOptionPane.showMessageDialog(panel, msg.toString());
+
+            // 오답 횟수 반영해서 파일에 저장
             FileManager fm = new FileManager(path);
             fm.saveToFile(manager.getVoc());
 
+            // 새 문제 세트로 다시 출제
             builder.reset();
         });
 
+        // =======================
+        // 이 카드가 다시 보여질 때마다 새 문제 세트로 리셋
+        // (퀴즈 탭을 떠났다가 다시 들어온 경우 등)
+        // =======================
         panel.addComponentListener(new ComponentAdapter() {
             @Override
             public void componentShown(ComponentEvent e) {
@@ -270,41 +349,91 @@ public class VocabFrame extends JFrame {
 
 
 
+
     private JPanel addEssayCard() {
         JPanel essayPanel = new JPanel(new BorderLayout(10,10));
-        JLabel title = new JLabel("한글 뜻을 보고 영어 단어를 입력하세요", JLabel.CENTER);
-        essayPanel.add(title, BorderLayout.NORTH);
+        essayPanel.setBorder(BorderFactory.createEmptyBorder(30, 60, 40, 60));
 
-        JPanel center = new JPanel(new GridLayout(2,1,5,5));
-        JLabel korLabel = new JLabel("한글 뜻: ", JLabel.CENTER);
-        JPanel korPanel =new JPanel(new FlowLayout(FlowLayout.CENTER));
-        korPanel.add(korLabel);
 
-        JPanel userInputPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
-        JLabel input = new JLabel("입력란: ");
+        // ---------- 상단 타이틀 ----------
+        JLabel title = new JLabel(
+                "<html><b>한글 뜻을 보고 영어 단어를 입력하세요</b></html>",
+                JLabel.CENTER
+        );
+        title.setFont(title.getFont().deriveFont(Font.BOLD, 22f));
+
+        JLabel subTitle = new JLabel("엔터 키를 누르면 바로 채점됩니다.", JLabel.CENTER);
+        subTitle.setFont(subTitle.getFont().deriveFont(14f));
+
+        JPanel north = new JPanel(new BorderLayout());
+        north.add(title, BorderLayout.NORTH);
+        north.add(subTitle, BorderLayout.SOUTH);
+
+        essayPanel.add(north, BorderLayout.NORTH);
+
+        // ---------- 가운데: 문제 + 입력 ----------
+        JPanel center = new JPanel();
+        center.setLayout(new BoxLayout(center, BoxLayout.Y_AXIS));
+
+        // 문제 박스
+        JPanel questionBox = new JPanel(new BorderLayout());
+        questionBox.setBorder(
+                BorderFactory.createTitledBorder("문제")
+        );
+
+        JLabel korLabel = new JLabel("한글 뜻: -", JLabel.CENTER);
+        korLabel.setFont(korLabel.getFont().deriveFont(Font.BOLD, 20f));
+        korLabel.setBorder(BorderFactory.createEmptyBorder(20, 10, 20, 10));
+
+        questionBox.add(korLabel, BorderLayout.CENTER);
+
+        // 입력 박스
+        JPanel inputBox = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 10));
+        inputBox.setBorder(
+                BorderFactory.createTitledBorder("답안 입력")
+        );
+
+        JLabel inputLabel = new JLabel("영어 단어: ");
+        inputLabel.setFont(inputLabel.getFont().deriveFont(16f));
+
         JTextField answer = new JTextField(20);
-        userInputPanel.add(input);
-        userInputPanel.add(answer);
+        answer.setFont(answer.getFont().deriveFont(16f));
 
-        center.add(korPanel);
-        center.add(userInputPanel);
+        inputBox.add(inputLabel);
+        inputBox.add(answer);
 
-        essayPanel.add(center,BorderLayout.CENTER);
+        center.add(questionBox);
+        center.add(Box.createVerticalStrut(20)); // 문제와 입력 사이 간격
+        center.add(inputBox);
 
+        essayPanel.add(center, BorderLayout.CENTER);
+
+        // ---------- 하단: 안내 문구 ----------
+        JLabel bottomHint = new JLabel(
+                "※ 정답/오답 메시지 확인 후 홈 화면으로 돌아갑니다.",
+                JLabel.CENTER
+        );
+        bottomHint.setFont(bottomHint.getFont().deriveFont(12f));
+        essayPanel.add(bottomHint, BorderLayout.SOUTH);
+
+        // ---------- 퀴즈 로직 (기존과 동일) ----------
         List<Word> voc = manager.getVoc();
         Word[] currentWord = new Word[1];
         Random rand = new Random();
 
-        if(voc.isEmpty()){
+        if (voc.isEmpty()) {
             korLabel.setText("단어장이 비어 있어 퀴즈를 진행할 수 없습니다.");
+            answer.setEnabled(false);
             return essayPanel;
         }
 
+        // 이 카드가 보일 때마다 새로운 문제 출제
         essayPanel.addComponentListener(new ComponentAdapter() {
             @Override
             public void componentShown(ComponentEvent e) {
-                if(voc.isEmpty()){
+                if (voc.isEmpty()) {
                     korLabel.setText("단어장이 비어 있어 퀴즈를 진행할 수 없습니다.");
+                    answer.setEnabled(false);
                     return;
                 }
                 Word w = voc.get(rand.nextInt(voc.size()));
@@ -318,33 +447,46 @@ public class VocabFrame extends JFrame {
             }
         });
 
-        answer.addActionListener(e ->
-        {
+        // 엔터 치면 채점
+        answer.addActionListener(e -> {
             if (currentWord[0] == null)
                 return;
 
             String userInput = answer.getText().trim();
             if (userInput.isEmpty()) {
-                JOptionPane.showMessageDialog(essayPanel, "영어 단어를 입력하세요.");
+                JOptionPane.showMessageDialog(
+                        essayPanel,
+                        "영어 단어를 입력하세요.",
+                        "입력 오류",
+                        JOptionPane.WARNING_MESSAGE
+                );
                 return;
             }
 
             String correct = currentWord[0].getEng();
             if (userInput.equals(correct)) {
-                JOptionPane.showMessageDialog(essayPanel, "정답입니다! (" + correct + ")");
+                JOptionPane.showMessageDialog(
+                        essayPanel,
+                        "정답입니다! (" + correct + ")"
+                );
             } else {
                 int beforeWrong = currentWord[0].getWrong_number();
                 currentWord[0].setWrong_number(beforeWrong + 1);
 
-                JOptionPane.showMessageDialog(essayPanel, "틀렸습니다.\n정답: " + correct);
+                JOptionPane.showMessageDialog(
+                        essayPanel,
+                        "틀렸습니다.\n정답: " + correct
+                );
             }
 
+            // 틀린 횟수 저장
             FileManager fm = new FileManager(path);
             fm.saveToFile(manager.getVoc());
 
+            // 홈 카드로 돌아가기
             Container parent = essayPanel.getParent();
             CardLayout c = (CardLayout) parent.getLayout();
-            c.show(parent, "home");
+            c.show(parent, "home"); // 카드 이름은 너가 쓰는 이름에 맞게
         });
 
         return essayPanel;
@@ -1013,8 +1155,9 @@ public class VocabFrame extends JFrame {
     }
 
 
-
+    // ======================================================
     //************* 유용한 기능 패널 ****************
+    // ==================================================
     private JPanel createUtilPanel() {
         JPanel panel = new JPanel(new BorderLayout());
 
@@ -1022,13 +1165,13 @@ public class VocabFrame extends JFrame {
         JPanel menu = new JPanel(new GridLayout(4, 1, 5, 5));
         JButton btnBookmark = new JButton("즐겨찾기");
         JButton btnWrongNote = new JButton("오답 노트");
-        //JButton btnRetest = new JButton("오답 재시험");
         JButton btnRandom = new JButton("오늘의 단어");
+        JButton btnStats     = new JButton("학습 통계");
 
         menu.add(btnBookmark);
         menu.add(btnWrongNote);
-        //menu.add(btnRetest);
         menu.add(btnRandom);
+        menu.add(btnStats);
 
         panel.add(menu, BorderLayout.WEST);
 
@@ -1039,8 +1182,8 @@ public class VocabFrame extends JFrame {
         // 각 기능별 패널 생성 및 추가
         utilCardPanel.add(createBookmarkPanel(), "BOOKMARK");  // 즐겨찾기 패널
         utilCardPanel.add(createWrongNotePanel(), "WRONG");    // 오답노트 패널
-        //utilCardPanel.add(createRetestPanel(), "RETEST");      // 재시험 패널
         utilCardPanel.add(createRandomWordPanel(), "RANDOM");  // 오늘의 단어 패널
+        utilCardPanel.add(createStatsPanel(), "STATS");
 
         panel.add(utilCardPanel, BorderLayout.CENTER);
 
@@ -1055,11 +1198,15 @@ public class VocabFrame extends JFrame {
             utilCard.show(utilCardPanel, "WRONG");
         });
 
-        //btnRetest.addActionListener(e -> utilCard.show(utilCardPanel, "RETEST"));
 
         btnRandom.addActionListener(e -> {
             updateRandomWords(); // 랜덤 단어 새로고침
             utilCard.show(utilCardPanel, "RANDOM");
+        });
+
+        btnStats.addActionListener(e -> {
+            refreshStatsPanel();
+            utilCard.show(utilCardPanel, "STATS");
         });
 
         return panel;
@@ -1245,17 +1392,81 @@ public class VocabFrame extends JFrame {
     }
 
 
-    //  4. 재시험 패널 (미완)
+    //  4.
+    // 학습 통계 패널 생성
+    private JPanel createStatsPanel() {
+        JPanel panel = new JPanel(new BorderLayout(10, 10));
+        panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
-//    private JPanel createRetestPanel() {
-//        JPanel panel = new JPanel(new BorderLayout());
-//        JLabel msg = new JLabel("재시험 기능 아직 구현안함", JLabel.CENTER);
-//
-//        // 퀴즈 패널을 재활용하는 게 좋을 것 같아서 아직 안했습니다
-//
-//        panel.add(msg, BorderLayout.CENTER);
-//        return panel;
-//    }
+        JLabel title = new JLabel("📊 학습 통계", JLabel.CENTER);
+        title.setFont(title.getFont().deriveFont(Font.BOLD, 20f));
+        panel.add(title, BorderLayout.NORTH);
+
+        // 상단 요약 3줄
+        JPanel summary = new JPanel(new GridLayout(3, 1, 5, 5));
+        lblStatsTotal = new JLabel();
+        lblStatsBookmark = new JLabel();
+        lblStatsWrongWords = new JLabel();
+
+        summary.add(lblStatsTotal);
+        summary.add(lblStatsBookmark);
+        summary.add(lblStatsWrongWords);
+
+        JPanel summaryWrap = new JPanel(new BorderLayout());
+        summaryWrap.setBorder(
+                BorderFactory.createTitledBorder("요약")
+        );
+        summaryWrap.add(summary, BorderLayout.CENTER);
+
+        // 하단: 오답 상위 목록
+        taStatsTopWrong = new JTextArea(8, 40);
+        taStatsTopWrong.setEditable(false);
+        taStatsTopWrong.setLineWrap(true);
+        taStatsTopWrong.setWrapStyleWord(true);
+
+        JScrollPane scroll = new JScrollPane(taStatsTopWrong);
+        JPanel wrongPanel = new JPanel(new BorderLayout());
+        wrongPanel.setBorder(
+                BorderFactory.createTitledBorder("오답 상위 5개")
+        );
+        wrongPanel.add(scroll, BorderLayout.CENTER);
+
+        panel.add(summaryWrap, BorderLayout.NORTH);
+        panel.add(wrongPanel, BorderLayout.CENTER);
+
+        // 처음 열릴 때 내용 채우기
+        refreshStatsPanel();
+
+        return panel;
+    }
+
+    // 통계 패널 내용 갱신
+    private void refreshStatsPanel() {
+        java.util.List<Word> voc = manager.getVoc();
+
+        int total = voc.size();
+        long bookmarkCnt = voc.stream().filter(Word::isBookMark).count();
+        long wrongWordCnt = voc.stream().filter(w -> w.getWrong_number() > 0).count();
+
+        if (lblStatsTotal != null) {
+            lblStatsTotal.setText("전체 단어 수: " + total + "개");
+        }
+        if (lblStatsBookmark != null) {
+            lblStatsBookmark.setText("즐겨찾기 단어: " + bookmarkCnt + "개");
+        }
+        if (lblStatsWrongWords != null) {
+            lblStatsWrongWords.setText("오답 기록이 있는 단어: " + wrongWordCnt + "개");
+        }
+
+        if (taStatsTopWrong != null) {
+            String summary = buildStatsSummary(); // 위에서 만든 요약 재활용
+            taStatsTopWrong.setText(summary);
+            taStatsTopWrong.setCaretPosition(0);
+        }
+    }
+
+
+
 
     //************* 시작 화면 *********
     // 시작 화면 패널
@@ -1299,6 +1510,119 @@ public class VocabFrame extends JFrame {
 
         return panel;
     }
+
+    // 파일 저장 공통 처리
+    private void saveAll() {
+        FileManager fm = new FileManager(path);
+        fm.saveToFile(manager.getVoc());
+        FileManager.saveExamples(exPath, manager.getExampleMap());
+    }
+
+    // 통계 요약 문자열 (팝업용 / 패널용 둘 다에서 사용 가능)
+    private String buildStatsSummary() {
+        java.util.List<Word> voc = manager.getVoc();
+
+        int total = voc.size();
+        long bookmarkCnt = voc.stream().filter(Word::isBookMark).count();
+        long wrongWordCnt = voc.stream().filter(w -> w.getWrong_number() > 0).count();
+        int totalWrongCount = voc.stream().mapToInt(Word::getWrong_number).sum();
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("전체 단어 수: ").append(total).append("\n");
+        sb.append("즐겨찾기 단어: ").append(bookmarkCnt).append("개\n");
+        sb.append("오답 기록이 있는 단어: ").append(wrongWordCnt).append("개\n");
+        sb.append("총 오답 횟수 합계: ").append(totalWrongCount).append("회\n");
+
+        // 오답 상위 5개
+        java.util.List<Word> topWrong = voc.stream()
+                .filter(w -> w.getWrong_number() > 0)
+                .sorted((a, b) -> Integer.compare(b.getWrong_number(), a.getWrong_number()))
+                .limit(5)
+                .toList();
+
+        sb.append("\n[오답 상위 5개]\n");
+        if (topWrong.isEmpty()) {
+            sb.append("오답 기록이 없습니다.\n");
+        } else {
+            for (Word w : topWrong) {
+                sb.append("- ")
+                        .append(w.getEng())
+                        .append(" (").append(w.getWrong_number()).append("회)\n");
+            }
+        }
+        return sb.toString();
+    }
+
+    // 상단 메뉴바 구성
+    private void initMenuBar() {
+        JMenuBar menuBar = new JMenuBar();
+
+        // ---- [파일] 메뉴 ----
+        JMenu fileMenu = new JMenu("파일");
+        JMenuItem miSave = new JMenuItem("저장");
+        JMenuItem miSaveExit = new JMenuItem("저장 후 종료");
+
+        miSave.addActionListener(e -> {
+            saveAll();
+            JOptionPane.showMessageDialog(
+                    this,
+                    "단어장과 예문이 저장되었습니다.",
+                    "저장 완료",
+                    JOptionPane.INFORMATION_MESSAGE
+            );
+        });
+
+        miSaveExit.addActionListener(e -> {
+            saveAll();
+            dispose();  // 창 닫기
+        });
+
+        fileMenu.add(miSave);
+        fileMenu.addSeparator();
+        fileMenu.add(miSaveExit);
+
+        // ---- [보기] 메뉴 ----
+        JMenu viewMenu = new JMenu("보기");
+        JMenuItem miStats = new JMenuItem("학습 통계 요약");
+
+        miStats.addActionListener(e -> {
+            String msg = buildStatsSummary();
+            JOptionPane.showMessageDialog(
+                    this,
+                    msg,
+                    "학습 통계 요약",
+                    JOptionPane.INFORMATION_MESSAGE
+            );
+        });
+
+        viewMenu.add(miStats);
+
+        // ---- [도움말] 메뉴 ----
+        JMenu helpMenu = new JMenu("도움말");
+        JMenuItem miAbout = new JMenuItem("프로그램 정보");
+
+        miAbout.addActionListener(e ->
+                JOptionPane.showMessageDialog(
+                        this,
+                        "단어장 프로그램\n제작: made by Team 4 (강동훈, 정의찬, 어지수)\n\n" +
+                                "CLI → Swing GUI로 확장된 단어 학습 도우미입니다.",
+                        "프로그램 정보",
+                        JOptionPane.INFORMATION_MESSAGE
+                )
+        );
+
+        helpMenu.add(miAbout);
+
+        // 메뉴바에 메뉴들 추가
+        menuBar.add(fileMenu);
+        menuBar.add(viewMenu);
+        menuBar.add(helpMenu);
+
+        // 프레임에 부착
+        setJMenuBar(menuBar);
+    }
+
+
 
 
 }

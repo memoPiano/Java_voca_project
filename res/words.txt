@@ -2,26 +2,26 @@ at first	처음에는	1	false
 castle	성	0	false
 considerable	상당한	1	true
 enlighten	계몽시키다/ 개화시키다	1	false
-explain	설명하다	0	false
+explain	설명하다	1	false
 explanation	설명	0	false
 female	여성의	0	false
-frankly speaking	솔직히 말하여	1	false
+frankly speaking	솔직히 말하여	2	false
 illegal	불법적인	0	false
-in the first place	처음으로	0	false
+in the first place	처음으로	1	false
 in the place of	～대신에	0	false
 intelligent	지적인	0	false
 invent	발명하다/ 만들다	0	true
 invention	발명	0	false
 last	마지막/ 지난 계속하다	2	false
 lately	최근에	0	false
-law	법	0	false
+law	법	1	false
 oppression	억압	0	false
 press	누르다/ 언론/ 출판	0	false
 recently	최근에	0	false
 region	지역	0	false
 regional	지역적인	0	false
-reinforce	강화시키다	5	false
-statement	진술	0	false
+reinforce	강화시키다	6	false
+statement	진술	1	false
 suppress	저하시키다	0	false
 suppression	저하/ 의기소침	3	false
 symbol	상징/ 징표	0	false
@@ -35,25 +35,25 @@ endow	부여하다/ 기부하다	0	false
 endowment	기부/ 기증	0	false
 inherit	상속하다/ 이어받다	0	false
 inheritance	유전/ 유산	0	false
-instead of	～대신에	0	false
+instead of	～대신에	1	false
 intelligence	지식	0	false
-lawful	법적인	0	false
+lawful	법적인	3	false
 legal	합법적인	0	false
 male	남성의	0	false
-nowadays	최근에	0	false
+nowadays	최근에	1	false
 of late	최근에	1	false
 oppress	억압하다	0	false
 religion	종교	0	false
 religious	종교적인	0	false
 rib	갈비뼈	0	false
-sociable	사교적인	0	false
+sociable	사교적인	1	false
 social	사회적인	0	false
 socialize	사회화하다	0	false
 society	사회	0	false
-state	상태/ 진술하다	0	false
+state	상태/ 진술하다	1	false
 symbolic	상징적인	0	false
 these days	최근에	0	false
 train	기차/ 훈련시키다	0	false
 trainer	훈련자	0	false
-universal	우주의/ 일반적인	0	false
+universal	우주의/ 일반적인	1	false
 consider	고려하다	0	false
